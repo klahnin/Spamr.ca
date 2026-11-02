@@ -21,7 +21,7 @@ use Laramin\Utility\VugiChugi;
 
 function systemDetails()
 {
-    $system['name'] = 'tweetsms';
+    $system['name'] = 'cipherecc';
     $system['version'] = '2.0';
     $system['build_version'] = '6.0.10';
     return $system;
