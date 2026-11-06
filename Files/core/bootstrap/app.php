@@ -73,6 +73,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             'apiKey' => ApiKey::class,
             'has.active.plan' => HasActivePlan::class,
+            'kyc.required' => \App\Http\Middleware\RequireKyc::class,
         ]);
 
         $middleware->preventRequestForgery(

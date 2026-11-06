@@ -61,6 +61,71 @@
                 </div>
             </div>
 
+            @php($kyc = $user->kycVerification)
+            <div class="card mt-30">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">@lang('KYC Verification')</h5>
+                    @if (!$kyc || $kyc->status === 'not_required')
+                        <span class="badge badge--dark">@lang('Not Required')</span>
+                    @elseif ($kyc->status === 'required')
+                        <span class="badge badge--warning">@lang('Awaiting Submission')</span>
+                    @elseif ($kyc->status === 'submitted')
+                        <span class="badge badge--info">@lang('Awaiting Review')</span>
+                    @elseif ($kyc->status === 'verified')
+                        <span class="badge badge--success">@lang('Verified')</span>
+                    @else
+                        <span class="badge badge--danger">@lang('Rejected')</span>
+                    @endif
+                </div>
+                <div class="card-body">
+                    @if ($kyc && $kyc->reason)
+                        <p><strong>@lang('Reason'):</strong> {{ $kyc->reason }}</p>
+                    @endif
+
+                    @if ($kyc && $kyc->status === 'submitted')
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'id']) }}"><i class="las la-id-card"></i> @lang('View ID document')</a>
+                            <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'selfie']) }}"><i class="las la-camera"></i> @lang('View selfie')</a>
+                        </div>
+                        <form method="POST" action="{{ route('admin.users.kyc.review', $user->id) }}">
+                            @csrf
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>@lang('Decision')</label>
+                                        <select name="decision" class="form-control" required>
+                                            <option value="verified">@lang('Verify and unlock user')</option>
+                                            <option value="rejected">@lang('Reject and request resubmission')</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label>@lang('Review note') <small class="text-muted">@lang('(shown to the user only if rejected)')</small></label>
+                                        <textarea name="admin_note" class="form-control" rows="2" maxlength="2000"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn--success">@lang('Save KYC decision')</button>
+                        </form>
+                    @elseif ($kyc && $kyc->status === 'required')
+                        <p class="text-muted mb-0">@lang('The account is locked to the KYC page until the user submits their documents.')</p>
+                    @else
+                        @if ($kyc && $kyc->status === 'rejected' && $kyc->admin_note)
+                            <p><strong>@lang('Last review note'):</strong> {{ $kyc->admin_note }}</p>
+                        @endif
+                        <form method="POST" action="{{ route('admin.users.kyc.require', $user->id) }}">
+                            @csrf
+                            <div class="form-group">
+                                <label>@lang('Reason for requiring KYC')</label>
+                                <textarea name="reason" class="form-control" rows="3" maxlength="1000" required placeholder="@lang('Example: We need to verify account activity before continuing.')"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn--warning">@lang('Require KYC and lock account')</button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+
             <div class="card mt-30">
                 <div class="card-header">
                     <h5 class="card-title mb-0">@lang('Information of') {{ $user->fullname }}</h5>

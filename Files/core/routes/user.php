@@ -30,18 +30,25 @@ Route::namespace('User\Auth')->name('user.')->middleware('guest')->group(functio
 
 Route::middleware('auth')->name('user.')->group(function () {
 
-    Route::get('user-data', 'User\UserController@userData')->name('data');
-    Route::post('user-data-submit', 'User\UserController@userDataSubmit')->name('data.submit');
+    Route::controller('User\\KycController')->prefix('kyc')->name('kyc.')->group(function () {
+        Route::get('/', 'show')->name('show');
+        Route::post('/', 'submit')->name('submit');
+    });
+
+    Route::middleware('kyc.required')->group(function () {
+        Route::get('user-data', 'User\UserController@userData')->name('data');
+        Route::post('user-data-submit', 'User\UserController@userDataSubmit')->name('data.submit');
+    });
 
     //authorization
-    Route::middleware('registration.complete')->namespace('User')->controller('AuthorizationController')->group(function () {
+    Route::middleware(['registration.complete', 'kyc.required'])->namespace('User')->controller('AuthorizationController')->group(function () {
         Route::get('authorization', 'authorizeForm')->name('authorization');
         Route::get('resend-verify/{type}', 'sendVerifyCode')->name('send.verify.code');
         Route::post('verify-email', 'emailVerification')->name('verify.email');
         Route::post('verify-mobile', 'mobileVerification')->name('verify.mobile');
     });
 
-    Route::middleware(['check.status', 'registration.complete'])->group(function () {
+    Route::middleware(['check.status', 'registration.complete', 'kyc.required'])->group(function () {
 
         Route::namespace('User')->group(function () {
 

@@ -1,10 +1,12 @@
 <?php
-$itemName = 'cipherecc';
+$itemName = 'tweetsms';
 error_reporting(E_ALL);
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 function appUrl()
 {
-	$current = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+	$scheme = $_SERVER['REQUEST_SCHEME']
+		?? ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
+	$current = $scheme . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 	$exp = explode('?action', $current);
 	$url = str_replace('index.php', '', $exp[0]);
 	$url = substr($url, 0, -8);
@@ -43,7 +45,13 @@ if ($action == 'requirements') {
 	} else {
 		$failed[] = 'allow_url_fopen() is required';
 	}
-	$dirs = ['../core/bootstrap/cache/', '../core/storage/', '../core/storage/app/', '../core/storage/framework/', '../core/storage/logs/'];
+	$dirs = [
+		__DIR__ . '/../core/bootstrap/cache/',
+		__DIR__ . '/../core/storage/',
+		__DIR__ . '/../core/storage/app/',
+		__DIR__ . '/../core/storage/framework/',
+		__DIR__ . '/../core/storage/logs/',
+	];
 	foreach ($dirs as $dir) {
 		$perm = substr(sprintf('%o', fileperms($dir)), -4);
 		if ($perm >= '0775') {
@@ -52,12 +60,12 @@ if ($action == 'requirements') {
 			$failed[] = str_replace("../", "", $dir) . ' is required 0775 permission. Current Permisiion is ' . $perm;
 		}
 	}
-	if (file_exists('database.sql')) {
+	if (file_exists(__DIR__ . '/database.sql')) {
 		$passed[] = 'database.sql should be available';
 	} else {
 		$failed[] = 'database.sql should be available';
 	}
-	if (file_exists('../.htaccess')) {
+	if (file_exists(__DIR__ . '/../.htaccess')) {
 		$passed[] = '".htaccess" should be available in root directory';
 	} else {
 		$failed[] = '".htaccess" should be available in root directory';
@@ -66,20 +74,37 @@ if ($action == 'requirements') {
 
 
 if ($action == 'result') {
-	$url = 'https://license.cipherecc.com/install/details';
+	$url = 'https://license.viserlab.com/install/details';
 	$params['product'] = $itemName;
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 	curl_setopt($ch, CURLOPT_URL, $url);
 	curl_setopt($ch, CURLOPT_POSTFIELDS, $params);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 	$result = curl_exec($ch);
-	curl_close($ch);
-	$response = json_decode($result, true);
+
+	if ($result === false) {
+		$response = [
+			'error' => 'error',
+			'message' => 'Unable to contact the ViserLab activation service: ' . htmlspecialchars(curl_error($ch), ENT_QUOTES, 'UTF-8'),
+		];
+	} else {
+		$response = json_decode($result, true);
+	}
 
 	if (isset($response['error']) && $response['error'] == 'ok') {
 		try {
-			$db = new PDO("mysql:host=$_POST[db_host];dbname={$_POST['db_name']}", $_POST['db_user'], $_POST['db_pass']);
+			$dbPort = filter_var($_POST['db_port'] ?? '3306', FILTER_VALIDATE_INT, [
+				'options' => ['min_range' => 1, 'max_range' => 65535],
+			]);
+
+			if ($dbPort === false) {
+				throw new InvalidArgumentException('Invalid database port.');
+			}
+
+			$db = new PDO("mysql:host=$_POST[db_host];port=$dbPort;dbname={$_POST['db_name']}", $_POST['db_user'], $_POST['db_pass']);
 			$dbinfo = $db->query('SELECT VERSION()')->fetchColumn();
 
 			if (strpos(strtolower($dbinfo), 'mariadb') !== false) {
@@ -103,13 +128,13 @@ if ($action == 'result') {
 			}
 		} catch (Exception $e) {
 			$response['error'] = 'error';
-			$response['message'] = $_POST['db_type'] == 'create-new-database' ? 'There is a problem with creating the database.' : 'Database Credential is Not Valid';
+			$response['message'] = ($_POST['db_type'] ?? '') == 'create-new-database' ? 'There is a problem with creating the database.' : 'Database Credential is Not Valid';
 		}
 	}
 
 	if (isset($response['error']) && $response['error'] == 'ok') {
 		try {
-			$query = file_get_contents("database.sql");
+			$query = file_get_contents(__DIR__ . '/database.sql');
 			$stmt = $db->prepare($query);
 			$stmt->execute();
 			$stmt->closeCursor();
@@ -121,10 +146,11 @@ if ($action == 'result') {
 
 	if (isset($response['error']) && $response['error'] == 'ok') {
 		try {
-			$file = fopen($response['location'], 'w');
+			$file = fopen(__DIR__ . '/../core/.env', 'w');
 			$arr['key'] = base64_encode(random_bytes(32));
 			$arr['url'] = $_POST['url'];
 			$arr['db_host'] = $_POST['db_host'];
+			$arr['db_port'] = $dbPort;
 			$arr['db_name'] = $_POST['db_name'];
 			$arr['db_user'] = $_POST['db_user'];
 			$arr['db_pass'] = $_POST['db_pass'];
@@ -133,6 +159,7 @@ if ($action == 'result') {
 			foreach ($arr as $key => $value) {
 			    $envBody = str_replace('{{' . $key . '}}', $value, $envBody);
 			}
+			$envBody = preg_replace('/^DB_PORT=.*/m', 'DB_PORT=' . $arr['db_port'], $envBody);
 			$envBody = str_replace('Laravel', ucfirst($itemName), $envBody);
 
 			fwrite($file, $envBody);
@@ -160,18 +187,18 @@ $sectionTitle =  empty($action) ? 'Terms of Use' : $action;
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>Easy Installer by CipherECC</title>
+	<title>Easy Installer by ViserLab</title>
 	<link rel="stylesheet" href="../assets/global/css/bootstrap.min.css">
 	<link rel="stylesheet" href="../assets/global/css/all.min.css">
 	<link rel="stylesheet" href="../assets/global/css/installer.css">
-	<link rel="shortcut icon" href="https://license.cipherecc.com/external/favicon.png" type="image/x-icon">
+	<link rel="shortcut icon" href="https://license.viserlab.com/external/favicon.png" type="image/x-icon">
 </head>
 
 <body>
 	<header class="py-3 border-bottom border-primary bg--dark">
 		<div class="container">
 			<div class="d-flex align-items-center justify-content-between header gap-3">
-				<img class="logo" src="https://license.cipherecc.com/external/logo.png" alt="CipherECC">
+				<img class="logo" src="https://license.viserlab.com/external/logo.png" alt="ViserLab">
 				<h3 class="title">Easy Installer</h3>
 			</div>
 		</div>
@@ -201,7 +228,7 @@ $sectionTitle =  empty($action) ? 'Terms of Use' : $action;
 									} else {
 										echo '<h3 class="text-danger mb-3">Your Server is not Capable to Handle the Request.</h3>';
 									}									
-									echo '<div class="warning mt-2"><h5 class="mb-4 fw-normal">Try again. Or you can ask for support by creating a support ticket.</h5><a href="?action=information" class="theme-button choto me-1 mb-3">Try Again</a> <a href="https://cipherecc.com/support" target="_blank" class="theme-button choto ms-1">create  ticket</a></div>';
+									echo '<div class="warning mt-2"><h5 class="mb-4 fw-normal">Try again. Or you can ask for support by creating a support ticket.</h5><a href="?action=information" class="theme-button choto me-1 mb-3">Try Again</a> <a href="https://viserlab.com/support" target="_blank" class="theme-button choto ms-1">create  ticket</a></div>';
 
 								}
 								echo '</div>';
@@ -224,6 +251,9 @@ $sectionTitle =  empty($action) ? 'Terms of Use' : $action;
 											</div>
 											<div class="information-form-group col-sm-6">
 												<input type="text" name="db_host" placeholder="Database Host" required>
+											</div>
+											<div class="information-form-group col-sm-6">
+												<input type="number" name="db_port" value="3306" min="1" max="65535" placeholder="Database Port" required>
 											</div>
 											<div class="information-form-group col-sm-6">
 												<input type="text" name="db_user" placeholder="Database User" required>
@@ -325,7 +355,7 @@ $sectionTitle =  empty($action) ? 'Terms of Use' : $action;
 	</div>
 	<footer class="py-3 text-center bg--dark border-top border-primary">
 		<div class="container">
-			<p class="m-0 font-weight-bold">&copy;<?php echo Date('Y') ?> - All Right Reserved by <a href="https://cipherecc.com/">CipherECC LLC</a></p>
+			<p class="m-0 font-weight-bold">&copy;<?php echo Date('Y') ?> - All Right Reserved by <a href="https://viserlab.com/">ViserLab LLC</a></p>
 		</div>
 	</footer>
 	<script src="../assets/global/js/bootstrap.bundle.min.js"></script>

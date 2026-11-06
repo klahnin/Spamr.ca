@@ -13,6 +13,8 @@ use App\Models\SupportTicket;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 class SiteController extends Controller
@@ -60,6 +62,29 @@ class SiteController extends Controller
         $pageTitle = "Pricing Plan";
         $sections = Page::where('tempname', activeTemplate())->where('slug', 'pricing')->first();
         return view('Template::pricing', compact('pageTitle', 'sections'));
+    }
+
+    public function bitcoinPrice()
+    {
+        try {
+            $price = Cache::remember('bitcoin_price_cad', now()->addMinute(), function () {
+                $response = Http::acceptJson()->timeout(5)->get('https://api.coinbase.com/v2/prices/BTC-CAD/spot');
+
+                if (!$response->successful() || !is_numeric($response->json('data.amount'))) {
+                    return null;
+                }
+
+                return (float) $response->json('data.amount');
+            });
+
+            if ($price === null) {
+                return response()->json(['message' => 'Bitcoin price is temporarily unavailable.'], 503);
+            }
+
+            return response()->json(['price' => $price, 'currency' => 'CAD', 'updated_at' => now()->toIso8601String()]);
+        } catch (\Throwable) {
+            return response()->json(['message' => 'Bitcoin price is temporarily unavailable.'], 503);
+        }
     }
 
     public function contactSubmit(Request $request)
@@ -175,10 +200,10 @@ class SiteController extends Controller
 
     public function placeholderImage($size = null)
     {
-        $imgWidth = explode('x', $size)[0];
-        $imgHeight = explode('x', $size)[1];
+        [$imgWidth, $imgHeight] = array_map('intval', explode('x', $size, 2));
+        abort_if($imgWidth < 1 || $imgHeight < 1, 404);
         $text = $imgWidth . '×' . $imgHeight;
-        $fontFile = realpath('assets/font/solaimanLipi_bold.ttf');
+        $fontFile = public_path('assets/font/solaimanLipi_bold.ttf');
         $fontSize = round(($imgWidth - 50) / 8);
         if ($fontSize <= 9) {
             $fontSize = 9;
@@ -191,13 +216,23 @@ class SiteController extends Controller
         $colorFill = imagecolorallocate($image, 100, 100, 100);
         $bgFill    = imagecolorallocate($image, 255, 255, 255);
         imagefill($image, 0, 0, $bgFill);
-        $textBox = imagettfbbox($fontSize, 0, $fontFile, $text);
-        $textWidth  = abs($textBox[4] - $textBox[0]);
-        $textHeight = abs($textBox[5] - $textBox[1]);
-        $textX      = ($imgWidth - $textWidth) / 2;
-        $textY      = ($imgHeight + $textHeight) / 2;
         header('Content-Type: image/jpeg');
-        imagettftext($image, $fontSize, 0, $textX, $textY, $colorFill, $fontFile, $text);
+
+        if (is_file($fontFile)) {
+            $textBox = imagettfbbox($fontSize, 0, $fontFile, $text);
+            $textWidth  = abs($textBox[4] - $textBox[0]);
+            $textHeight = abs($textBox[5] - $textBox[1]);
+            $textX      = ($imgWidth - $textWidth) / 2;
+            $textY      = ($imgHeight + $textHeight) / 2;
+            imagettftext($image, $fontSize, 0, $textX, $textY, $colorFill, $fontFile, $text);
+        } else {
+            // The optional TTF is absent from this package. Use PHP's built-in
+            // bitmap font so local placeholder images still render.
+            $bitmapFont = 5;
+            $textX = max(0, (int) (($imgWidth - imagefontwidth($bitmapFont) * strlen($text)) / 2));
+            $textY = max(0, (int) (($imgHeight - imagefontheight($bitmapFont)) / 2));
+            imagestring($image, $bitmapFont, $textX, $textY, $text, $colorFill);
+        }
         imagejpeg($image);
         imagedestroy($image);
     }

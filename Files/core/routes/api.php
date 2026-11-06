@@ -31,7 +31,7 @@ Route::namespace('Api')->name('api.')->prefix('v1')->group(function () {
 
         Route::post('logout', "User\Auth\LoginController@logout");
 
-        Route::namespace('User\Auth')->middleware('check.status')->group(function () {
+        Route::namespace('User\Auth')->middleware(['check.status', 'kyc.required'])->group(function () {
             Route::controller('LoginController')->group(function () {
                 Route::post('add-device', "addDevice");
             });
@@ -39,7 +39,7 @@ Route::namespace('Api')->name('api.')->prefix('v1')->group(function () {
     });
 
     Route::namespace('User')->group(function () {
-        Route::middleware(["auth.api:sanctum"])->group(function () {
+        Route::middleware(["auth.api:sanctum", 'kyc.required'])->group(function () {
             Route::prefix('message')->controller("SmsController")->group(function () {
                 Route::post('/received', "received");
                 Route::post('/update/{id}', "update");
@@ -54,7 +54,7 @@ Route::namespace('Api')->name('api.')->prefix('v1')->group(function () {
 
         // Pusher API
         Route::controller('PusherController')->group(function () {
-            Route::post('pusher/auth', 'authenticationApp')->middleware('auth.api:sanctum');
+            Route::post('pusher/auth', 'authenticationApp')->middleware(['auth.api:sanctum', 'kyc.required']);
             Route::post('pusher/auth/{socketId}/{channelName}', 'authentication');
         });
     });

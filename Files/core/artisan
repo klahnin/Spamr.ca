@@ -5,6 +5,52 @@ use Symfony\Component\Console\Input\ArgvInput;
 
 define('LARAVEL_START', microtime(true));
 
+if (($argv[1] ?? null) === 'serve') {
+    $php = PHP_BINARY;
+    $phpIni = __DIR__ . '/tools/php-8.5.12-x64/php.ini';
+    $projectRoot = dirname(__DIR__);
+    $documentRoot = $projectRoot;
+    $router = $projectRoot . '/router.php';
+    $mysql = __DIR__ . '/tools/mysql-8.4.11/mysql-8.4.11-winx64/bin/mysqld.exe';
+    $mysqlConfig = __DIR__ . '/tools/mysql-8.4.11/my.ini';
+
+    // The local development database is deliberately separate from XAMPP's
+    // shared MySQL service. Start it on its private port when needed so that
+    // `php artisan serve` is all that is required after a reboot.
+    $databasePort = 3308;
+    $databaseSocket = @fsockopen('127.0.0.1', $databasePort, $errorNumber, $errorMessage, 1);
+
+    if (is_resource($databaseSocket)) {
+        fclose($databaseSocket);
+    } elseif (PHP_OS_FAMILY === 'Windows' && is_file($mysql) && is_file($mysqlConfig)) {
+        $command = 'start "TweetSMS Local MySQL" /B '
+            . escapeshellarg($mysql)
+            . ' --defaults-file=' . escapeshellarg($mysqlConfig);
+
+        pclose(popen('cmd /C ' . $command, 'r'));
+        usleep(500000);
+    }
+
+    $command = [
+        escapeshellarg($php),
+    ];
+
+    if (is_file($phpIni)) {
+        $command[] = '-c';
+        $command[] = escapeshellarg($phpIni);
+    }
+
+    $command = array_merge($command, [
+        '-S', '127.0.0.1:8000',
+        '-t', escapeshellarg($documentRoot),
+        escapeshellarg($router),
+    ]);
+
+    passthru(implode(' ', $command));
+
+    exit;
+}
+
 // Register the Composer autoloader...
 require __DIR__.'/vendor/autoload.php';
 

@@ -141,6 +141,11 @@ class User extends Authenticatable
         return $this->hasMany(DeviceToken::class);
     }
 
+    public function kycVerification()
+    {
+        return $this->hasOne(KycVerification::class);
+    }
+
     public function hasLimit($column, $quantity = 0, $hasInfinite = true)
     {
         if (!Schema::hasColumn('users', $column)) {

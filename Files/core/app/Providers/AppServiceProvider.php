@@ -28,6 +28,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Artisan commands must remain usable before the web installer has
+        // created the application's database and environment configuration.
+        if ($this->app->runningInConsole()) {
+            return;
+        }
+
         if (!cache()->get('SystemInstalled')) {
             $envFilePath = base_path('.env');
             if (!file_exists($envFilePath)) {

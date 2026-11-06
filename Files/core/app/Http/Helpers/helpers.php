@@ -21,7 +21,7 @@ use Laramin\Utility\VugiChugi;
 
 function systemDetails()
 {
-    $system['name'] = 'cipherecc';
+    $system['name'] = 'tweetsms';
     $system['version'] = '2.0';
     $system['build_version'] = '6.0.10';
     return $system;
@@ -229,8 +229,10 @@ function getPageSections($arr = false)
 function getImage($image, $size = null)
 {
     $clean = '';
-    if (file_exists($image) && is_file($image)) {
-        return asset($image) . $clean;
+    $publicImagePath = public_path(ltrim($image, '/'));
+
+    if (is_file($image) || is_file($publicImagePath)) {
+        return asset(ltrim($image, '/')) . $clean;
     }
     if ($size) {
         return route('placeholder.image', $size);
@@ -299,7 +301,9 @@ function menuActive($routeName, $type = null, $param = null) {
 function fileUploader($file, $location, $size = null, $old = null, $thumb = null, $filename = null)
 {
     $fileManager = new FileManager($file);
-    $fileManager->path = $location;
+    // FileInfo stores public asset paths. Resolve them against Laravel's public
+    // directory so uploads work no matter which folder started `php artisan`.
+    $fileManager->path = public_path(ltrim($location, '/'));
     $fileManager->size = $size;
     $fileManager->old = $old;
     $fileManager->thumb = $thumb;

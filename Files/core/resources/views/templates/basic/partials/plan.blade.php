@@ -118,12 +118,12 @@
                 <div class="plan-card__button">
                     @guest
                         <a href="{{ route('user.login') }}" class="btn plan--btn pill w-100">
-                            @lang('Purchase Now')
+                            @lang('Enroll Now')
                         </a>
                     @else
                         <button class="btn plan--btn purchase-btn pill" data-plan='@json($plan)'
                             @disabled($user->plan_id == $plan->id)>
-                            @lang('Purchase Now')
+                            @lang('Enroll Now')
                         </button>
                     @endguest
                 </div>

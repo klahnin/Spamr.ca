@@ -1,0 +1,19 @@
+# Local editor and runtime tooling
+.vscode/
+android-commandline-tools.zip
+
+# Local-only PHP/MySQL runtime and generated Vite files
+Files/core/tools/
+Files/core/vite-local.log
+Files/core/public/
+
+# Local helper entrypoints that rely on the excluded runtime above
+Files/core/php.cmd
+Files/router.php
+Files/serve-local.cmd
+artisan
+cron-local.cmd
+
+# Root package wrappers are convenience-only for this workstation
+/package.json
+/package-lock.json

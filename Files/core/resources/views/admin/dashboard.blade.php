@@ -1,5 +1,11 @@
 @extends('admin.layouts.app')
+
+@push('style-lib')
+    @vite('resources/ts/dashboard.tsx')
+@endpush
+
 @section('panel')
+    <div data-react-dashboard data-dashboard-kind="admin" data-dashboard-name="{{ auth('admin')->user()->name }}" data-dashboard-detail="Your existing Blade administration tools stay in place while new dashboard modules can use React."></div>
     <div class="row gy-4 mb-3">
         <div class="col-xxl-3 col-sm-6">
             <x-widget style="6" link="{{ route('admin.users.all') }}" icon="las la-users" title="Total Users"

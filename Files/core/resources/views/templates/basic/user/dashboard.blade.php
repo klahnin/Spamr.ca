@@ -1,6 +1,12 @@
 @extends('Template::layouts.master')
+
+@push('style-lib')
+    @vite('resources/ts/dashboard.tsx')
+@endpush
+
 @section('content')
     <div class="notice"></div>
+    <div data-react-dashboard data-dashboard-kind="user" data-dashboard-name="{{ auth()->user()->firstname }}" data-dashboard-detail="Your existing dashboard modules stay in place while new interactive modules can be built with React."></div>
 
     <!-- Devices -->
     <div class="row g-3 mb-3">

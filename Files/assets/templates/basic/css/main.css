@@ -3957,6 +3957,44 @@ input[type=number] {
     right: 0;
 }
 
+.bitcoin-payment-card {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    margin: 0 auto 42px;
+    max-width: 920px;
+    padding: 24px 28px;
+    border: 1px solid rgba(247, 147, 26, .25);
+    border-radius: 16px;
+    background: linear-gradient(135deg, #fffaf3, #fff 70%);
+    box-shadow: 0 12px 35px rgba(247, 147, 26, .1);
+}
+
+.bitcoin-payment-card__icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 58px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    color: #fff;
+    background: #f7931a;
+    font-size: 30px;
+}
+
+.bitcoin-payment-card__content { flex: 1; }
+.bitcoin-payment-card__eyebrow { margin-bottom: 4px; color: #f7931a; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.bitcoin-payment-card__content h4 { margin-bottom: 6px; font-size: 22px; }
+.bitcoin-payment-card__content p:last-child { margin-bottom: 0; color: hsl(var(--body-color)); }
+.bitcoin-payment-card__price { min-width: 180px; padding-left: 22px; border-left: 1px solid rgba(247, 147, 26, .3); text-align: right; }
+.bitcoin-payment-card__price-label, .bitcoin-payment-card__price small { display: block; color: hsl(var(--body-color)); font-size: 12px; }
+.bitcoin-payment-card__price strong { display: block; color: #d96905; font-size: 25px; line-height: 1.4; }
+
+@media screen and (max-width: 575px) {
+    .bitcoin-payment-card { align-items: flex-start; flex-wrap: wrap; gap: 16px; padding: 20px; }
+    .bitcoin-payment-card__price { width: 100%; padding: 16px 0 0; border-top: 1px solid rgba(247, 147, 26, .3); border-left: 0; text-align: left; }
+}
+
 .plan-card {
     --inner-p: 32px;
     border-radius: 12px;
@@ -4004,7 +4042,7 @@ input[type=number] {
 }
 
 .plan-card__icon {
-    max-width: 40px;
+    max-width: 64px;
     width: 100%;
 }
 

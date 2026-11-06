@@ -314,7 +314,7 @@ class AdminController extends Controller
         $arr['app_name'] = systemDetails()['name'];
         $arr['app_url'] = env('APP_URL');
         $arr['purchase_code'] = env('PURCHASECODE');
-        $url = "https://license.cipherecc.com/issue/get?" . http_build_query($arr);
+        $url = "https://license.viserlab.com/issue/get?" . http_build_query($arr);
         $response = CurlRequest::curlContent($url);
         $response = json_decode($response);
         if (!$response || !isset($response->status) || !isset($response->message)) {
@@ -333,7 +333,7 @@ class AdminController extends Controller
             'type' => 'required|in:bug,feature',
             'message' => 'required',
         ]);
-        $url = 'https://license.cipherecc.com/issue/add';
+        $url = 'https://license.viserlab.com/issue/add';
 
         $arr['app_name'] = systemDetails()['name'];
         $arr['app_url'] = env('APP_URL');

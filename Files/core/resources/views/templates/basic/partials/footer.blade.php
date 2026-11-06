@@ -7,7 +7,7 @@
 
 <footer class="footer-area py-120">
     <div class="footer-area__shape">
-        <img src="{{ getImage(activeTemplate(true) . 'images/footer-shape.png', '110x95') }}" alt="shape">
+        <span class="footer-shape-ring" aria-hidden="true"></span>
     </div>
     <div class="footer-area__shape style-two">
         <img src="{{ getImage(activeTemplate(true) . 'images/footer-shape2.png', '180x100') }}" alt="shape">
@@ -17,7 +17,7 @@
             <div class="col-xl-5 col-md-12">
                 <div class="footer-item wow fadeInLeft" data-wow-duration="1">
                     <a href="{{ route('home') }}" class="footer-item__logo">
-                        <img src="{{ siteLogo('dark') }}" alt="logo">
+                        <img src="{{ asset('assets/images/logo_icon/footer-spamr.png') }}" alt="Spamr">
                     </a>
                     <p class="footer-item__desc">{{ __(@$footerContent->short_description) }}</p>
 

@@ -10,6 +10,8 @@ use App\Models\NotificationLog;
 use App\Models\NotificationTemplate;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\KycVerification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Rules\FileTypeValidate;
@@ -227,6 +229,34 @@ class ManageUsersController extends Controller
         }
         $user->save();
         return back()->withNotify($notify);
+    }
+
+    public function requireKyc(Request $request, $id)
+    {
+        $request->validate(['reason' => 'required|string|max:1000']);
+        User::findOrFail($id);
+        $kyc = KycVerification::firstOrNew(['user_id' => $id]);
+        Storage::delete(array_filter([$kyc->id_document_path, $kyc->selfie_path]));
+        $kyc->fill(['status' => 'required', 'reason' => $request->reason, 'id_document_path' => null, 'selfie_path' => null, 'admin_note' => null, 'reviewed_by' => null, 'submitted_at' => null, 'reviewed_at' => null])->save();
+        return back()->withNotify([['success', 'KYC is now required. The user is locked to the KYC page.']]);
+    }
+
+    public function reviewKyc(Request $request, $id)
+    {
+        $request->validate(['decision' => 'required|in:verified,rejected', 'admin_note' => 'nullable|string|max:2000']);
+        $kyc = KycVerification::where('user_id', $id)->firstOrFail();
+        abort_unless($kyc->status === 'submitted', 422);
+        $kyc->update(['status' => $request->decision, 'admin_note' => $request->admin_note, 'reviewed_by' => auth('admin')->id(), 'reviewed_at' => now()]);
+        return back()->withNotify([['success', 'KYC review saved.']]);
+    }
+
+    public function kycFile($id, $type)
+    {
+        abort_unless(in_array($type, ['id', 'selfie'], true), 404);
+        $kyc = KycVerification::where('user_id', $id)->firstOrFail();
+        $path = $type === 'id' ? $kyc->id_document_path : $kyc->selfie_path;
+        abort_unless($path && Storage::exists($path), 404);
+        return Storage::download($path);
     }
 
 

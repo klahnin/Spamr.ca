@@ -857,3 +857,58 @@ h6.right-highlited__title {
 .countdown-wrapper {
     display: inline !important;
 }
+
+/* Match the footer ring to Spamr's brand orange without changing its shape. */
+.footer-shape-ring {
+    display: block;
+    width: 110px;
+    height: 95px;
+    background: #ff5a1f;
+    -webkit-mask: url('../images/footer-shape.png') center / contain no-repeat;
+    mask: url('../images/footer-shape.png') center / contain no-repeat;
+}
+
+/* Centered conversion hero for Spamr. */
+.banner-section--centered {
+    min-height: 470px;
+    display: flex;
+    align-items: center;
+    padding: 76px 0 64px;
+}
+
+.banner-section--centered .banner-content__title {
+    font-size: clamp(2.5rem, 5vw, 4.25rem);
+    line-height: 1.08;
+    max-width: 780px;
+    margin: 0 auto;
+}
+
+.banner-section--centered .banner-content__text {
+    max-width: 620px;
+    margin: 20px auto 0;
+    font-size: 1.1rem;
+}
+
+.banner-section--centered .banner-content__button {
+    justify-content: center;
+    padding-top: 30px;
+    gap: 32px;
+}
+
+.banner-content__trial {
+    margin: 14px 0 0;
+    color: hsl(var(--heading-color) / .62);
+    font-size: .875rem;
+}
+
+@media screen and (max-width: 575px) {
+    .banner-section--centered {
+        min-height: auto;
+        padding: 78px 0 60px;
+    }
+
+    .banner-section--centered .banner-content__button {
+        flex-direction: column;
+        gap: 12px;
+    }
+}

@@ -5,14 +5,14 @@
 <section class="about-us py-120" id="about">
     <div class="container">
         <div class="row gy-4 align-items-center">
-            <div class="col-lg-6">
-                <div class="about-thumb wow fadeInLeft" data-wow-duration="1">
+            <div class="col-lg-6 order-lg-2">
+                <div class="about-thumb wow fadeInRight" data-wow-duration="1">
                     <img class="fit-image" src="{{ frontendImage('about', @$aboutContent->about_image, '1130x1000') }}"
                         alt="about-thumb">
                 </div>
             </div>
-            <div class="col-lg-6">
-                <div class="about-content wow fadeInRight" data-wow-duration="1">
+            <div class="col-lg-6 order-lg-1">
+                <div class="about-content wow fadeInLeft" data-wow-duration="1">
                     <div class="section-heading  style-left">
                         <h3 class="section-heading__name">{{ __(@$aboutContent->title) }}</h3>
                         <h3 class="section-heading__title">{{ __(@$aboutContent->heading) }}</h3>
