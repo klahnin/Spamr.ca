@@ -69,7 +69,9 @@ class LoginController extends Controller
         }
 
         $user = $request->user();
-        $tokenResult = $user->createToken('auth_token', ['user'])->plainTextToken;
+        // This token only bridges credential login to device pairing.  It is
+        // revoked when pairing succeeds; long-lived API access is device-scoped.
+        $tokenResult = $user->createToken('device_pairing', ['device:pair'])->plainTextToken;
 
         $this->authenticated($request, $user);
         $notify[] = 'Login Successful';
@@ -78,10 +80,10 @@ class LoginController extends Controller
             'user' => auth()->user(),
             'access_token' => $tokenResult,
             'token_type' => 'Bearer',
-           'pusher'       => [
-                'pusher_key'     => config('app.PUSHER_APP_KEY'),
-                'pusher_id'      => config('app.PUSHER_APP_ID'),
-                'pusher_secret'  => config('app.PUSHER_APP_SECRET'),
+            // A Pusher client needs the public key and cluster only.  Private
+            // channel signatures are produced by the authenticated endpoint.
+            'pusher' => [
+                'pusher_key' => config('app.PUSHER_APP_KEY'),
                 'pusher_cluster' => config('app.PUSHER_APP_CLUSTER'),
             ]
         ]);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\User\Auth;
 use Exception;
 use App\Models\User;
 use App\Models\Device;
+use App\Models\DevicePairingToken;
 use App\Constants\Status;
 use App\Events\DeviceAdd;
 use App\Events\DeviceLogOut;
@@ -32,18 +33,19 @@ class LoginController extends Controller
         }
 
 
-        $scanData = explode("HOST", $request->scan_data);
         try {
-            $userId = decrypt(@$scanData[0]);
-            $user   = User::find($userId);
+            $pairingToken = preg_replace('/^spamr-pair:/', '', $request->scan_data);
+            $pairing = DevicePairingToken::where('token_hash', hash('sha256', $pairingToken))
+                ->whereNull('used_at')
+                ->where('expires_at', '>', now())
+                ->lockForUpdate()
+                ->first();
 
-            if (!$user) {
-                return   apiResponse(false, 406, null, ['User not found']);
+            if (!$pairing || $pairing->user_id !== auth()->id()) {
+                return apiResponse(false, 401, null, ['Invalid or expired pairing code']);
             }
 
-            if ($user->id != auth()->id()) {
-                return   apiResponse(false, 401, null, ['Invalid QR code']);
-            }
+            $user = $pairing->user;
 
             $device = Device::where('user_id', $user->id)
                 ->where('device_id', $request->device_id)
@@ -75,9 +77,20 @@ class LoginController extends Controller
             $device->status = Status::ENABLE;
             $device->save();
 
+            $pairing->used_at = now();
+            $pairing->save();
+
+            // A device is allowed one revocable token.  Re-pairing replaces it.
+            DB::table('personal_access_tokens')
+                ->where('tokenable_id', $user->id)
+                ->where('tokenable_type', User::class)
+                ->where('device_id', $device->device_id)
+                ->delete();
+
+            $request->user()->currentAccessToken()?->delete();
             event(new DeviceAdd($device));
 
-            $data  = $this->response();
+            $data = $this->response($device->device_id);
 
             return apiResponse(true, 200, "Login Successfully", null, $data);
         } catch (Exception $ex) {
@@ -105,18 +118,19 @@ class LoginController extends Controller
         return  apiResponse(true, 200, "Logout Successful");
     }
 
-    protected function response()
+    protected function response(string $deviceId)
     {
         $user = auth()->user();
+        $newToken = $user->createToken('device:' . $deviceId, ['device:access']);
+        $newToken->accessToken->forceFill(['device_id' => $deviceId])->save();
+
         $data  = [
             'user'         => $user,
-            'access_token' => $user->createToken('auth_token', [request()->device_id])->plainTextToken,
+            'access_token' => $newToken->plainTextToken,
             'token_type'   => 'Bearer',
             'base_url'     => route('home'),
             'pusher'       => [
                 'pusher_key'     => config('app.PUSHER_APP_KEY'),
-                'pusher_id'      => config('app.PUSHER_APP_ID'),
-                'pusher_secret'  => config('app.PUSHER_APP_SECRET'),
                 'pusher_cluster' => config('app.PUSHER_APP_CLUSTER'),
             ]
         ];
