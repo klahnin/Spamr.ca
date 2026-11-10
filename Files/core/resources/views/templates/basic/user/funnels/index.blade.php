@@ -10,7 +10,8 @@
    @if($domain->verified_at)<span class="text-success">✓ Verified {{ $domain->verified_at->diffForHumans() }}</span>
    @else <span class="text-warning">Pending DNS TXT verification</span><br><code>_spamr-verify.{{ $domain->hostname }}</code><br><code>{{ $domain->verification_token }}</code>
    <form method="POST" action="{{ route('user.funnels.domains.verify',$domain->id) }}">@csrf<button class="btn btn-sm btn-outline--base mt-2">Verify DNS record</button></form>@endif
-  </div>@if($domain->verified_at && !$domain->cname_verified_at)<div class="small mt-2 text-warning">Add CNAME <code>{{ $domain->hostname }}</code> → <code>{{ config('funnels.tracking_cname_target') }}</code>, then verify again.</div>@elseif($domain->cname_verified_at)<div class="small mt-2 text-success">✓ Branded tracking host ready</div>@endif@endforeach
+  </div>@if($domain->verified_at && !$domain->cname_verified_at)<div class="small mt-2 text-warning">Add CNAME <code>{{ $domain->hostname }}</code> → <code>{{ config('funnels.tracking_cname_target') }}</code>, then verify again.</div>@elseif($domain->cname_verified_at)<div class="small mt-2 text-success">✓ Branded tracking host ready</div>@endif
+  @endforeach
  </div></div></div>
  <div class="col-lg-7"><div class="card custom--card"><div class="card-body"><h5>Create external-hosted funnel</h5><form method="POST" action="{{ route('user.funnels.store') }}">@csrf
   <div class="row"><div class="col-md-6 mb-3"><label class="form-label">Funnel name</label><input class="form-control form--control" name="name" required></div><div class="col-md-6 mb-3"><label class="form-label">Goal</label><select class="form-control form--control" name="goal_type"><option value="lead">Lead</option><option value="purchase">Purchase</option><option value="signup">Sign-up</option><option value="appointment">Appointment</option></select></div></div>
