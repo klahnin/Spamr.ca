@@ -9,6 +9,7 @@
                             <thead>
                                 <tr>
                                     <th>@lang('Plan')</th>
+                                    <th>@lang('Funnels')</th>
                                     <th>@lang('Price')</th>
                                     <th>@lang('Recurring') | @lang('Contact Limit')</th>
                                     <th>@lang('Device Limit') | @lang('Group Limit')</th>
@@ -31,6 +32,13 @@
                                                     <small class="name">{{ __($plan->title) }}</small>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td>
+                                            @if ($plan->funnels_available)
+                                                <span class="badge badge--success">@lang('Included')</span>
+                                            @else
+                                                <span class="badge badge--dark">@lang('Not included')</span>
+                                            @endif
                                         </td>
                                         <td>{{ showAmount(@$plan->price, currencyFormat: false) }} {{ gs('cur_text') }}</td>
                                         <td>
@@ -208,6 +216,11 @@
                                 <label>@lang('Campaign')</label>
                                 <input type="checkbox" data-width="100%" data-height="40px" data-onstyle="-success" data-offstyle="-danger" data-bs-toggle="toggle" data-on="@lang('YES')" data-off="@lang('NO')" name="campaign">
                             </div>
+                            <div class="col-md-6 form-group">
+                                <label>@lang('Spamr Funnels & Domains')</label>
+                                <input type="checkbox" data-width="100%" data-height="40px" data-onstyle="-success" data-offstyle="-danger" data-bs-toggle="toggle" data-on="@lang('YES')" data-off="@lang('NO')" name="funnels_available">
+                                <small class="text-muted d-block mt-1">@lang('Allows verified domains, tracked links, analytics, and Leads Vault.')</small>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -283,6 +296,11 @@
                     $modal.find('input[name=campaign]').bootstrapToggle('on');
                 } else {
                     $modal.find('input[name=campaign]').bootstrapToggle('off');
+                }
+                if (plan.funnels_available) {
+                    $modal.find('input[name=funnels_available]').bootstrapToggle('on');
+                } else {
+                    $modal.find('input[name=funnels_available]').bootstrapToggle('off');
                 }
                 $modal.modal('show');
             });

@@ -54,6 +54,7 @@ class PlanController extends Controller
         $plan->api_available   = $request->api_available  ? Status::YES : Status::NO;
         $plan->scheduled_sms   = $request->scheduled_sms  ? Status::YES : Status::NO;
         $plan->campaign        = $request->campaign       ? Status::YES : Status::NO;
+        $plan->funnels_available = $request->funnels_available ? Status::YES : Status::NO;
 
         if ($request->hasFile('image')) {
             try {

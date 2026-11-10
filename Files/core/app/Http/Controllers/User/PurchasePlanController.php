@@ -71,6 +71,7 @@ class PurchasePlanController extends Controller
         $user->plan_api_available      = $plan->api_available;
         $user->plan_scheduled_sms      = $plan->scheduled_sms;
         $user->plan_campaign_available = $plan->campaign;
+        $user->plan_funnels_available  = $plan->funnels_available;
         $user->daily_sms_limit         = $plan->daily_sms_limit;
 
         if ($user->available_sms == Status::UNLIMITED) {

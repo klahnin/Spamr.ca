@@ -145,7 +145,7 @@ Route::middleware('auth')->name('user.')->group(function () {
                 });
             });
 
-            Route::controller('FunnelController')->prefix('funnels')->name('funnels.')->group(function () {
+            Route::middleware('has.active.plan:plan_funnels_available')->controller('FunnelController')->prefix('funnels')->name('funnels.')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::post('domains', 'storeDomain')->name('domains.store');
                 Route::post('domains/{id}/verify', 'verifyDomain')->name('domains.verify');
