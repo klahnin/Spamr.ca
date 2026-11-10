@@ -171,6 +171,7 @@ class SiteController extends Controller
         $language = Language::where('code', $lang)->first();
         if (!$language) $lang = 'en';
         session()->put('lang', $lang);
+        session()->save();
         return back();
     }
 
