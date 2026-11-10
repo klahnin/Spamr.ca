@@ -29,8 +29,12 @@ Route::namespace('User\Auth')->name('user.')->middleware('guest')->group(functio
 });
 
 Route::middleware('auth')->name('user.')->group(function () {
+    Route::controller('User\\ComplianceOnboardingController')->prefix('compliance')->name('compliance.')->group(function () {
+        Route::get('/', 'show')->name('show');
+        Route::post('/', 'submit')->name('submit');
+    });
 
-    Route::controller('User\\KycController')->prefix('kyc')->name('kyc.')->group(function () {
+    Route::middleware('compliance.complete')->controller('User\\KycController')->prefix('kyc')->name('kyc.')->group(function () {
         Route::get('/', 'show')->name('show');
         Route::post('/', 'submit')->name('submit');
     });
@@ -48,7 +52,7 @@ Route::middleware('auth')->name('user.')->group(function () {
         Route::post('verify-mobile', 'mobileVerification')->name('verify.mobile');
     });
 
-    Route::middleware(['check.status', 'registration.complete', 'kyc.required'])->group(function () {
+    Route::middleware(['check.status', 'registration.complete', 'compliance.complete', 'kyc.required'])->group(function () {
 
         Route::namespace('User')->group(function () {
 

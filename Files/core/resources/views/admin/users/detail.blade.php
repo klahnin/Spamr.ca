@@ -84,9 +84,25 @@
 
                     @if ($kyc && $kyc->status === 'submitted')
                         <div class="d-flex flex-wrap gap-2 mb-4">
-                            <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'id']) }}"><i class="las la-id-card"></i> @lang('View ID document')</a>
-                            <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'selfie']) }}"><i class="las la-camera"></i> @lang('View selfie')</a>
+                            @if ($kyc->verification_type === 'business')
+                                <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'business']) }}"><i class="las la-building"></i> @lang('View business document')</a>
+                                <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'director_id']) }}"><i class="las la-id-card"></i> @lang('View director ID')</a>
+                            @else
+                                <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'id']) }}"><i class="las la-id-card"></i> @lang('View ID document')</a>
+                                <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'selfie']) }}"><i class="las la-camera"></i> @lang('View selfie')</a>
+                            @endif
                         </div>
+                        @if ($kyc->verification_data)
+                            <div class="table-responsive mb-4">
+                                <table class="table table--light">
+                                    <tbody>
+                                        @foreach ($kyc->verification_data as $field => $value)
+                                            <tr><th class="text-capitalize">{{ str_replace('_', ' ', $field) }}</th><td>{{ $value }}</td></tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
                         <form method="POST" action="{{ route('admin.users.kyc.review', $user->id) }}">
                             @csrf
                             <div class="row">

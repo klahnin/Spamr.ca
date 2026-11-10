@@ -146,6 +146,11 @@ class User extends Authenticatable
         return $this->hasOne(KycVerification::class);
     }
 
+    public function complianceProfile()
+    {
+        return $this->hasOne(ComplianceProfile::class);
+    }
+
     public function hasLimit($column, $quantity = 0, $hasInfinite = true)
     {
         if (!Schema::hasColumn('users', $column)) {

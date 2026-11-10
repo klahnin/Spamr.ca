@@ -90,6 +90,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
             'has.active.plan' => HasActivePlan::class,
             'kyc.required' => \App\Http\Middleware\RequireKyc::class,
+            'compliance.complete' => \App\Http\Middleware\EnsureComplianceOnboarding::class,
             'device.token' => EnsureDeviceTokenMatchesRoute::class,
             'device.pairing' => EnsurePairingSessionToken::class,
         ]);

@@ -236,8 +236,8 @@ class ManageUsersController extends Controller
         $request->validate(['reason' => 'required|string|max:1000']);
         User::findOrFail($id);
         $kyc = KycVerification::firstOrNew(['user_id' => $id]);
-        Storage::delete(array_filter([$kyc->id_document_path, $kyc->selfie_path]));
-        $kyc->fill(['status' => 'required', 'reason' => $request->reason, 'id_document_path' => null, 'selfie_path' => null, 'admin_note' => null, 'reviewed_by' => null, 'submitted_at' => null, 'reviewed_at' => null])->save();
+        Storage::delete(array_filter([$kyc->id_document_path, $kyc->selfie_path, $kyc->business_document_path, $kyc->director_id_document_path]));
+        $kyc->fill(['status' => 'required', 'reason' => $request->reason, 'id_document_path' => null, 'selfie_path' => null, 'business_document_path' => null, 'director_id_document_path' => null, 'verification_data' => null, 'admin_note' => null, 'reviewed_by' => null, 'submitted_at' => null, 'reviewed_at' => null])->save();
         return back()->withNotify([['success', 'KYC is now required. The user is locked to the KYC page.']]);
     }
 
@@ -252,9 +252,15 @@ class ManageUsersController extends Controller
 
     public function kycFile($id, $type)
     {
-        abort_unless(in_array($type, ['id', 'selfie'], true), 404);
+        abort_unless(in_array($type, ['id', 'selfie', 'business', 'director_id'], true), 404);
         $kyc = KycVerification::where('user_id', $id)->firstOrFail();
-        $path = $type === 'id' ? $kyc->id_document_path : $kyc->selfie_path;
+        $paths = [
+            'id' => $kyc->id_document_path,
+            'selfie' => $kyc->selfie_path,
+            'business' => $kyc->business_document_path,
+            'director_id' => $kyc->director_id_document_path,
+        ];
+        $path = $paths[$type];
         abort_unless($path && Storage::exists($path), 404);
         return Storage::download($path);
     }
