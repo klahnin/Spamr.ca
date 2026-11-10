@@ -22,6 +22,9 @@ class PaymentController extends Controller
             $gate->where('status', Status::ENABLE);
         })->with('method')->orderby('name')->get();
 
+        // Do not render a usable payment form until a processor has at least
+        // one configured currency, rate, limit, and credentials.
+
 
         $plan = null;
         if (session('PURCHASE_PLAN')) {

@@ -9,6 +9,15 @@
     @endphp
     <div class="row justify-content-center">
         <div class="col-lg-10">
+            @if ($gatewayCurrency->isEmpty())
+                <div class="card custom--card">
+                    <div class="card-body text-center py-5">
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width:58px;height:58px;background:#fff2ec;color:#ff5c35;font-size:28px;"><i class="las la-credit-card"></i></span>
+                        <h4>@lang('Payment methods are being configured')</h4>
+                        <p class="text-muted mx-auto mb-0" style="max-width:560px">@lang('No payment processor is currently available. Please contact support or ask an administrator to configure and enable a payment gateway currency before making a deposit.')</p>
+                    </div>
+                </div>
+            @else
             <form action="{{ route('user.deposit.insert') }}" method="post" class="deposit-form">
                 @csrf
                 <input type="hidden" name="currency">
@@ -131,6 +140,7 @@
                     </div>
                 </div>
             </form>
+            @endif
         </div>
     </div>
 @endsection
