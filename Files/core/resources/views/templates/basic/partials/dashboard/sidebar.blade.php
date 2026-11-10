@@ -48,7 +48,6 @@
                 </li>
             </ul>
         </li>
-        @if (auth()->user()->plan_funnels_available)
         <li class="menu-item">
             <a href="#funnels" data-bs-toggle="collapse" @if (Route::is('user.funnels.*')) aria-expanded="true" @else aria-expanded="false" @endif class="dropdown-toggle">
                 <i class="las la-chart-line"></i><span>@lang('Domain Analytics')</span>
@@ -58,7 +57,6 @@
                 <li><a class="{{ menuActive('user.funnels.leads') }}" href="{{ route('user.funnels.leads') }}"><span class="fas fa-circle"></span> @lang('Leads Vault')</a></li>
             </ul>
         </li>
-        @endif
 
         <li><a class="{{ menuActive('user.contact.index') }}" href="{{ route('user.contact.index') }}">
                 <i class="las la-id-card"></i>
