@@ -88,8 +88,8 @@
                                 <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'business']) }}"><i class="las la-building"></i> @lang('View business document')</a>
                                 <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'director_id']) }}"><i class="las la-id-card"></i> @lang('View director ID')</a>
                             @else
-                                <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'id']) }}"><i class="las la-id-card"></i> @lang('View ID document')</a>
-                                <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'selfie']) }}"><i class="las la-camera"></i> @lang('View selfie')</a>
+                                <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'id']) }}"><i class="las la-id-card"></i> @lang('View ID front')</a>
+                                <a class="btn btn--info btn-sm" href="{{ route('admin.users.kyc.file', [$user->id, 'selfie']) }}"><i class="las la-id-card"></i> @lang('View ID back')</a>
                             @endif
                         </div>
                         @if ($kyc->verification_data)
