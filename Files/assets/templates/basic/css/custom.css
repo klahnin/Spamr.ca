@@ -941,3 +941,15 @@ h6.right-highlited__title {
 .spamr-language-menu__list { position: absolute; top: calc(100% + 6px); right: 0; display: grid; min-width: 145px; padding: 5px; border: 1px solid #dce6f1; border-radius: 10px; background: #fff; box-shadow: 0 12px 28px rgba(35,59,96,.15); }
 .spamr-language-menu__list a { display: flex; align-items: center; gap: 8px; padding: 7px 8px; color: #385173; border-radius: 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .spamr-language-menu__list a:hover,.spamr-language-menu__list a.is-active { color: #f05222; background: #fff0ea; }
+
+/* Keep the mobile navigation header aligned with Spamr's light public layout. */
+@media screen and (max-width: 1199px) {
+    .navbar .offcanvas-header {
+        background-color: #fff !important;
+        border-bottom: 1px solid #edf0f4;
+    }
+
+    .navbar .offcanvas-header .btn-close {
+        filter: none;
+    }
+}
