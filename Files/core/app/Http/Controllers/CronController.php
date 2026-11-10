@@ -87,7 +87,7 @@ class CronController extends Controller
             try {
                 $smsQuery = Sms::$scope()
                     ->where('sms_type', Status::SMS_TYPE_SEND)
-                    ->where('schedule', "<=", now()->format("Y-m-d H:i"))
+                    ->where('schedule', '<=', now())
                     ->orderBy('schedule', 'ASC')
                     ->with("device")
                     ->take(15);

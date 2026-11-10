@@ -3,16 +3,17 @@
     <div class="login-main" style="background-image: url('{{ asset('assets/admin/images/login.jpg') }}')">
         <div class="container custom-container d-flex justify-content-center">
             <div class="login-area">
-                <div class="text-center mb-3">
-                    <h2 class="text-white mb-2">@lang('Verify Code')</h2>
-                    <p class="text-white mb-2">@lang('Please check your email and enter the verification code you got in your email.')</p>
+                <div class="login-verification-copy text-center mb-3">
+                    <img class="login-brand" src="{{ siteLogo() }}" alt="{{ __(gs('site_name')) }}">
+                    <h2 class="mb-2">@lang('Verify Code')</h2>
+                    <p class="mb-2">@lang('Please check your email and enter the verification code you got in your email.')</p>
                 </div>
                 <form action="{{ route('admin.password.verify.code') }}" method="POST" class="login-form w-100">
                     @csrf
 
                     <div class="code-box-wrapper d-flex w-100">
                         <div class="form-group mb-3 flex-fill">
-                            <span class="text-white">@lang('Verification Code')</span>
+                            <span>@lang('Verification Code')</span>
                             <div class="verification-code">
                                 <input type="text" name="code" class="overflow-hidden" autocomplete="off">
                                 <div class="boxes">
@@ -29,7 +30,7 @@
                     <button type="submit" class="btn cmn-btn w-100">@lang('Submit')</button>
                     <div class="d-flex flex-wrap justify-content-between mt-3">
                         <a href="{{ route('admin.password.reset') }}" class="forget-text">@lang('Try to send again')</a>
-                        <a href="{{ route('admin.login') }}" class="text-white"><i class="las la-sign-in-alt"></i>@lang('Back to Login')</a>
+                        <a href="{{ route('admin.login') }}" class="login-back-link"><i class="las la-sign-in-alt"></i>@lang('Back to Login')</a>
                     </div>
                 </form>
             </div>
@@ -74,8 +75,8 @@
         .cmn-btn.disabled,
         .cmn-btn:disabled {
             color: #fff;
-            background-color: #3d2bfb;
-            border-color: #3d2bfb;
+            background: #ff9a52;
+            border-color: #ff9a52;
             opacity: 0.7;
         }
     </style>

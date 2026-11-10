@@ -4,9 +4,13 @@
 
         @include('Template::partials.alert_box')
         <div class="col-md-12 campaign_wrapper">
-            <div class="card custom--card">
-                <div class="card-header">
-                    <h5 class="card-title">{{ __(@$pageTitle) }} </h5>
+            <div class="card custom--card bulk-launch-card">
+                <div class="card-header bulk-launch-card__header">
+                    <span class="bulk-launch-card__icon"><i class="las la-layer-group"></i></span>
+                    <div>
+                        <h5 class="card-title">@lang('Launch Bulk SMS Campaign')</h5>
+                        <p>@lang('Distribute your workload across a connected Android SIM device.')</p>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="create-campaign">
@@ -17,14 +21,14 @@
                                 <div class="row">
                                     <div class="col-lg-6">
                                         <div class="form-group">
-                                            <label class="form-label">@lang('Title')</label>
+                                            <label class="form-label">@lang('Campaign Name')</label>
                                             <input type="text" class="form-control form--control" name="title" value="{{ old('title') }}"
-                                                required>
+                                                placeholder="@lang('Flash Sale VIP Offer Nov 2026')" required>
                                         </div>
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="form-group">
-                                            <label>@lang('Device')</label>
+                                            <label>@lang('Android Device')</label>
                                             <select name="device" class="form-control form--control select2--dropdown"
                                                 required>
                                                 <option value="" selected disabled>@lang('Please Select One')</option>
@@ -39,7 +43,26 @@
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="form-group">
-                                            <label class="required">@lang('Select SIM')</label>
+                                            <label>@lang('Random Delay Between SMS')</label>
+                                            <select name="random_delay_range" class="form-control form--control select2--dropdown" data-minimum-results-for-search="-1" required>
+                                                <option value="0" @selected(old('random_delay_range') === '0')>@lang('No additional delay')</option>
+                                                <option value="3-6" @selected(old('random_delay_range', '3-6') === '3-6')>@lang('3 to 6 Seconds (Recommended)')</option>
+                                                <option value="6-12" @selected(old('random_delay_range') === '6-12')>@lang('6 to 12 Seconds')</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>@lang('Multi-SIM Load Balance')</label>
+                                            <select name="load_balance_mode" class="form-control form--control select2--dropdown" data-minimum-results-for-search="-1" required>
+                                                <option value="selected_sim" @selected(old('load_balance_mode', 'selected_sim') == 'selected_sim')>@lang('Use selected Android SIM')</option>
+                                                <option value="evenly_split" @selected(old('load_balance_mode') == 'evenly_split')>@lang('Evenly Split across all Android Devices')</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label class="required">@lang('Android SIM')</label>
                                             <select name="sim" class="form-control form--control select2--dropdown"
                                                 data-minimum-results-for-search="-1" required
                                                 data-selected="{{ old('sim') }}">
@@ -49,7 +72,7 @@
                                     </div>
                                     <div class="col-lg-6">
                                         <div class="form-group">
-                                            <label>@lang('Schedule')</label>
+                                            <label>@lang('Campaign Timing')</label>
                                             <select name="schedule" class="form-control form--control select2--dropdown"
                                                 data-minimum-results-for-search="-1" required>
                                                 <option value="1">@lang('Send Now')</option>
@@ -79,7 +102,7 @@
 
                                     <div class="col-lg-12 number-selection-wrapper">
                                         <div class="form-group">
-                                            <label class="form-label required">@lang('Select Numbers From')</label>
+                                            <label class="form-label required">@lang('Target Contact Group')</label>
                                             <select name="selection_type" class="selectionType form-control form--control select2--dropdown" data-minimum-results-for-search="-1" required>
                                                 <option value="" selected disabled>@lang('Select One')</option>
                                                 <option value="{{ Status::CONTACT }}">@lang('Contacts')</option>
@@ -131,6 +154,7 @@
                                             <label class="form-label required">@lang('Country')</label>
                                             <select name="country" class="form-control form--control select2--dropdown">
                                                 @foreach ($countries as $key => $country)
+                                                    @continue(in_array($key, ['US', 'RU', 'CN', 'IL', 'BY', 'IR', 'KP', 'CU', 'SY', 'AF', 'MM', 'VE', 'YE', 'SD', 'SO', 'LY', 'HT'], true))
                                                     <option data-mobile_code="{{ $country->dial_code }}"
                                                         value="{{ $country->country }}" data-code="{{ $key }}">
                                                         {{ __($country->country) }}
@@ -167,7 +191,7 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label>@lang('Template')</label>
+                                        <label>@lang('Message Template')</label>
                                         <select name="template_id" class="form-control form--control select2--dropdown"
                                             data-minimum-results-for-search="-1">
                                             <option value="" selected disabled>@lang('Select Template')</option>
@@ -180,8 +204,25 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label>@lang('Message')</label>
-                                        <textarea name="message" class="form--control" required>{{ old('message') }}</textarea>
+                                        <div class="message-composer-label">
+                                            <label>@lang('Message')</label>
+                                            <div class="message-assist-controls" aria-label="@lang('Writing assistance')">
+                                                <select class="message-language" aria-label="@lang('Message language')">
+                                                    <option value="en">@lang('English')</option>
+                                                    <option value="fr">@lang('Français')</option>
+                                                </select>
+                                                <label class="message-assist-toggle">
+                                                    <input type="checkbox" class="message-autocorrect" checked>
+                                                    <span>@lang('Auto-correct')</span>
+                                                </label>
+                                                <label class="message-assist-toggle">
+                                                    <input type="checkbox" class="message-punctuation" checked>
+                                                    <span>@lang('Auto punctuation')</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <textarea name="message" lang="en" spellcheck="true" class="form--control campaign-message" placeholder="@lang('Hi {Name}, enjoy 20% off your next purchase using code SPAMR20. Reply STOP to opt-out.')" required>{{ old('message') }}</textarea>
+                                        <small class="message-assist-help">@lang('Corrections run when you leave the message field. Merge tags such as {Name} are preserved.')</small>
                                     </div>
                                     <div class="form-group">
                                         <label>@lang('Shortcode')</label>
@@ -194,18 +235,17 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <button type="submit" class="btn btn--base">@lang('Submit')</button>
+                                    <button type="submit" class="btn btn--base bulk-launch-submit"><i class="las la-play"></i> @lang('Start Campaign Queue')</button>
                                 </div>
                             </form>
                         </div>
                         <div class="phone-preview-wrapper">
                             <div class="phone-preview bg-img"
-                                data-background-image="{{ asset(activeTemplate(true) . 'images/dashboard/phone.png') }}">
+                                data-background-image="{{ asset(activeTemplate(true) . 'images/dashboard/phone-modern.png') }}">
                                 <div class="border">
                                     <div class="phone-screen">
                                         <div class="chat">
-                                            <div class="messages">
-                                            </div>
+                                            <div class="messages" aria-live="polite"></div>
                                             <div class="bottom-area">
                                                 <input type="text" disabled placeholder="@lang('Your message')"></input>
                                                 <button class="btn" disabled>@lang('Send')</button>
@@ -405,13 +445,24 @@
                 messagePreview();
             });
 
-            $("textarea[name=message]").on('keyup keypress change keydown paste', function(e) {
+            $("textarea[name=message]").on('input change', function() {
                 messagePreview();
             });
 
-            if ($("textarea[name=message]").val()) {
-                messagePreview();
-            }
+            $("textarea[name=message]").on('blur', function() {
+                applyMessageAssistance();
+            });
+
+            $('.message-language').on('change', function () {
+                $("textarea[name=message]").attr('lang', this.value);
+                applyMessageAssistance();
+            });
+
+            $('.message-autocorrect, .message-punctuation').on('change', function () {
+                applyMessageAssistance();
+            });
+
+            messagePreview();
 
             $('.shortcode-btn').on('click', function (e) {
                 let value = $(this).data('value');
@@ -443,17 +494,72 @@
             });
 
             function messagePreview() {
-                let message = $("textarea[name=message]").val();
+                const message = $("textarea[name=message]").val() || '';
+                const $preview = $('.phone-screen .chat .messages');
 
-                if (message.trim() === "") {
-                    $('.phone-screen .chat .messages').html("");
-                } else {
-                    let formattedMessage = message.replace(/\n/g, "<br>");
-
-                    $('.phone-screen .chat .messages').html(`
-                        <div class="myMessage">${formattedMessage}</div>
-                    `);
+                $preview.empty();
+                if (!message.trim()) {
+                    $preview.append($('<p>', {
+                        class: 'phone-preview-placeholder',
+                        text: "{{ trans('Your campaign message will appear here') }}"
+                    }));
+                    return;
                 }
+
+                // Build text nodes and anchors separately: message content is never interpreted as HTML.
+                const $bubble = $('<div>', { class: 'myMessage' });
+                const urlPattern = /(?:https?:\/\/|www\.)[^\s<>{}]+/gi;
+                let cursor = 0;
+
+                message.replace(urlPattern, function (url, offset) {
+                    $bubble.append(document.createTextNode(message.slice(cursor, offset)));
+                    const trailingPunctuation = (url.match(/[.,!?;:]+$/) || [''])[0];
+                    const visibleUrl = trailingPunctuation ? url.slice(0, -trailingPunctuation.length) : url;
+                    const href = visibleUrl.startsWith('www.') ? `https://${visibleUrl}` : visibleUrl;
+                    $('<a>', {
+                        class: 'message-preview-link',
+                        href: href,
+                        text: visibleUrl,
+                        target: '_blank',
+                        rel: 'noopener noreferrer',
+                        title: "{{ trans('Open link') }}"
+                    }).appendTo($bubble);
+                    if (trailingPunctuation) $bubble.append(document.createTextNode(trailingPunctuation));
+                    cursor = offset + url.length;
+                    return url;
+                });
+                $bubble.append(document.createTextNode(message.slice(cursor)));
+                $preview.append($bubble);
+                $preview.scrollTop($preview.prop('scrollHeight'));
+            }
+
+            function applyMessageAssistance() {
+                const $field = $("textarea[name=message]");
+                let value = $field.val() || '';
+                if (!value.trim()) return;
+
+                const language = $('.message-language').val();
+                if ($('.message-autocorrect').is(':checked')) {
+                    const corrections = language === 'fr'
+                        ? [
+                            [/\bj ai\b/gi, "j'ai"], [/\bc est\b/gi, "c'est"],
+                            [/\bn est\b/gi, "n'est"], [/\bca\b/g, 'ça']
+                        ]
+                        : [
+                            [/\bteh\b/gi, 'the'], [/\brecieve\b/gi, 'receive'],
+                            [/\bseperate\b/gi, 'separate'], [/\bdont\b/gi, "don't"], [/\bcant\b/gi, "can't"]
+                        ];
+                    corrections.forEach(([pattern, replacement]) => value = value.replace(pattern, replacement));
+                }
+
+                if ($('.message-punctuation').is(':checked')) {
+                    value = value.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
+                    value = value.replace(/(^|[.!?]\s+)([a-zàâçéèêëîïôûùüÿñæœ])/g, (match, start, letter) => start + letter.toUpperCase());
+                    if (!/[.!?…]$/.test(value)) value += '.';
+                }
+
+                if ($field.val() !== value) $field.val(value);
+                messagePreview();
             }
 
             $('.selectionType').on('change', function(){
@@ -513,6 +619,44 @@
 
 @push('style')
     <style>
+        .bulk-launch-card {
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            overflow: hidden !important;
+            border: 1px solid #dbe5f1;
+            border-radius: 18px;
+            box-shadow: 0 16px 42px rgba(30, 57, 91, .11);
+        }
+
+        .bulk-launch-card__header {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 22px 25px;
+            border-bottom: 1px solid #e4ebf4;
+            background: linear-gradient(115deg, #f5fbff, #fff);
+        }
+
+        .bulk-launch-card__header .card-title { margin: 0; color: #173654; font-size: 20px; font-weight: 700; }
+        .bulk-launch-card__header p { margin: 3px 0 0; color: #7086a2; font-size: 13px; }
+        .bulk-launch-card__icon { display: grid; width: 42px; height: 42px; place-items: center; color: #169fdf; border-radius: 12px; background: #e2f4fe; font-size: 24px; }
+        .bulk-launch-card .card-body { padding: 28px; }
+        .bulk-launch-card .form-group > label, .bulk-launch-card .form-label { color: #36506e; font-size: 13px; font-weight: 600; }
+        .bulk-launch-card .form--control, .bulk-launch-card .form-control { border-color: #d6e1ed; border-radius: 11px; background: #fcfdff; }
+        .bulk-launch-card .form--control:focus, .bulk-launch-card .form-control:focus { border-color: #169fdf; box-shadow: 0 0 0 3px rgba(22, 159, 223, .10); }
+        .bulk-launch-card .campaign-message { min-height: 118px; resize: vertical; }
+        .message-composer-label { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 8px; }
+        .message-composer-label > label { margin-bottom: 0; }
+        .message-assist-controls { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 12px; }
+        .message-language { height: 28px; min-width: 90px; padding: 2px 8px; color: #36506b; font-size: 12px; border: 1px solid #d6e1ed; border-radius: 7px; background: #fff; }
+        .message-assist-toggle { display: inline-flex; align-items: center; gap: 5px; margin: 0; color: #526b84; font-size: 12px; font-weight: 500; white-space: nowrap; cursor: pointer; }
+        .message-assist-toggle input { width: 14px; height: 14px; accent-color: #14a9e7; cursor: pointer; }
+        .message-assist-help { display: block; margin-top: 6px; color: #7c90a6; font-size: 11px; }
+        .bulk-launch-card .border-line-title { color: #173654; }
+        .bulk-launch-submit { min-width: 205px; border-radius: 11px; background: #14a9e7 !important; box-shadow: 0 7px 15px rgba(20, 169, 231, .24); }
+        .bulk-launch-submit:hover { background: #078dca !important; }
+
         .mobile-wrapper textarea{
             height: 215px;
         }
@@ -680,34 +824,70 @@
         }
 
         .phone-preview {
-            width: 280px;
-            height: 560px;
+            width: 300px;
+            height: 652px;
             border-radius: 10px !important;
-            background-size: contain !important;
+            background-size: 100% 100% !important;
             background-position: center !important;
             background-repeat: no-repeat !important;
             position: relative;
         }
 
+        .phone-preview::after {
+            position: absolute;
+            z-index: 3;
+            inset: 0;
+            pointer-events: none;
+            content: '';
+            background-image: url("{{ asset(activeTemplate(true) . 'images/dashboard/phone-modern.png') }}");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 100% 100%;
+        }
+
         .campaign_wrapper .border {
             position: absolute;
-            top: 12.1%;
-            bottom: 11.6%;
+            top: 5.5%;
+            bottom: 5.3%;
             left: 50%;
             transform: translateX(-50%);
             overflow: hidden;
-            width: calc(100% - 40px);
-            border: 2px solid hsl(var(--dark) / .2) !important;
+            width: calc(100% - 12%);
+            border: 0 !important;
+            border-radius: 37px 37px 42px 42px;
+            background: #fff;
+            z-index: 1;
+        }
+
+        .phone-screen,
+        .phone-screen .chat {
+            position: relative;
+            height: 100%;
+            width: 100%;
         }
 
         .chat .messages {
-            display: block;
+            display: flex;
+            align-content: flex-end;
+            flex-wrap: wrap;
             overflow-x: hidden;
-            /* overflow-y: scroll; */
+            overflow-y: auto;
             position: relative;
-            height: 90%;
+            box-sizing: border-box;
+            height: calc(100% - 42px);
             width: 100%;
-            padding: 2% 3%;
+            padding: 14px 12px;
+        }
+
+        .phone-preview-placeholder {
+            align-self: center;
+            width: 100%;
+            margin: 0;
+            padding: 0 18px;
+            color: #a9b7c7;
+            font-size: 12px;
+            line-height: 1.45;
+            text-align: center;
         }
 
         .chat .message {
@@ -768,6 +948,20 @@
             border-radius: 25px;
             clear: both;
             font: 400 15px 'Open Sans', sans-serif;
+            white-space: pre-wrap;
+        }
+
+        .phone-preview .message-preview-link {
+            color: #087de1;
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 2px;
+            overflow-wrap: anywhere;
+        }
+
+        .phone-preview .message-preview-link:hover {
+            color: #005db0;
         }
 
         .chat .myMessage,
@@ -799,9 +993,14 @@
         }
 
         @media (max-width: 767px) {
+            .bulk-launch-card .card-body { padding: 20px 15px; }
+            .bulk-launch-card__header { padding: 18px 16px; }
+            .bulk-launch-card__header .card-title { font-size: 17px; }
             .phone-preview-wrapper {
                 display: none;
             }
+            .message-composer-label { align-items: flex-start; flex-direction: column; }
+            .message-assist-controls { justify-content: flex-start; }
         }
     </style>
 @endpush

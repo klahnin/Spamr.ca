@@ -8,6 +8,26 @@ Route::get('/clear', function () {
 
 Route::get('cron', 'CronController@cron')->name('cron');
 
+Route::post('/campaign-coverage/check', [\App\Http\Controllers\CampaignCoverageController::class, 'check'])
+    ->middleware('throttle:20,1')
+    ->name('campaign.coverage.check');
+
+// External, verified-domain-only funnel tracking. No credentials or phone
+// numbers are accepted by these public endpoints.
+Route::controller(\App\Http\Controllers\FunnelTrackingController::class)->prefix('f')->name('funnels.')->group(function () {
+    Route::get('r/{linkToken}/{recipientToken?}', 'redirect')->name('redirect')->middleware('throttle:120,1');
+    Route::get('script/{publicId}.js', 'script')->name('script')->middleware('throttle:120,1');
+    Route::post('track', 'track')->name('track')->middleware('throttle:120,1');
+    Route::post('track/lead', 'lead')->name('lead')->middleware('throttle:30,1');
+});
+
+// Customer-owned branded tracking host. The production tracking ingress must
+// preserve the original Host header after validating its TLS certificate.
+Route::get('/s/{slug}/{recipientToken?}', [\App\Http\Controllers\FunnelTrackingController::class, 'brandedRedirect'])
+    ->where(['slug' => '[A-Za-z0-9-]+', 'recipientToken' => '[A-Za-z0-9_-]+'])
+    ->middleware('throttle:120,1')
+    ->name('funnels.branded.redirect');
+
 // User Support Ticket
 Route::controller('TicketController')->prefix('ticket')->name('ticket.')->group(function () {
     Route::get('/', 'supportTicket')->name('index');

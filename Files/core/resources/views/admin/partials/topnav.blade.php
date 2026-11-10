@@ -71,6 +71,32 @@
                     <a href="{{ route('home') }}" target="_blank"><i class="las la-globe"></i></a>
                 </button>
             </li>
+            @if (gs('multi_language'))
+                @php
+                    $languageFlags = ['en' => 'en.svg', 'fr' => 'fr.svg', 'nl' => 'nl.svg', 'ru' => 'ru.svg', 'zh' => 'zh.svg'];
+                    $adminLanguages = App\Models\Language::orderBy('name')->get();
+                    $activeLanguage = $adminLanguages->firstWhere('code', session('lang')) ?? $adminLanguages->firstWhere('code', 'en') ?? $adminLanguages->first();
+                @endphp
+                <li class="admin-language-picker">
+                    <details class="admin-language-menu">
+                        <summary>
+                            @if($activeLanguage)
+                                <img src="{{ asset('assets/images/language/flags/' . ($languageFlags[$activeLanguage->code] ?? 'en.svg')) }}" alt="">
+                                <span>{{ __($activeLanguage->name) }}</span>
+                            @endif
+                            <i class="las la-angle-down"></i>
+                        </summary>
+                        <div class="admin-language-menu__list">
+                        @foreach ($adminLanguages as $language)
+                            <a href="{{ route('lang', $language->code) }}" @class(['is-active' => $activeLanguage?->code === $language->code])>
+                                <img src="{{ asset('assets/images/language/flags/' . ($languageFlags[$language->code] ?? 'en.svg')) }}" alt="">
+                                <span>{{ __($language->name) }}</span>
+                            </a>
+                        @endforeach
+                        </div>
+                    </details>
+                </li>
+            @endif
             <li class="dropdown">
                 <button type="button" class="primary--layer notification-bell" data-bs-toggle="dropdown"
                     data-display="static" aria-haspopup="true" aria-expanded="false">
@@ -184,6 +210,14 @@
 
 @push('style')
 <style>
+    .admin-language-picker { display: flex; align-items: center; position: relative; }
+    .admin-language-menu summary { display: flex; align-items: center; gap: 7px; min-height: 32px; padding: 5px 9px; color: #385173; background: #f8fbff; border: 1px solid #d9e4f1; border-radius: 8px; cursor: pointer; list-style: none; font-size: 11px; font-weight: 600; }
+    .admin-language-menu summary::-webkit-details-marker { display: none; }
+    .admin-language-menu summary>img,.admin-language-menu__list img { width: 18px; height: 12px; border-radius: 2px; object-fit: cover; box-shadow: 0 1px 2px rgba(20,44,78,.18); }
+    .admin-language-menu summary i { font-size: 13px; transition: transform .18s ease; }.admin-language-menu[open] summary i { transform: rotate(180deg); }
+    .admin-language-menu__list { position: absolute; top: calc(100% + 6px); right: 0; z-index: 1050; display: grid; min-width: 145px; padding: 5px; border: 1px solid #dce6f1; border-radius: 10px; background: #fff; box-shadow: 0 12px 28px rgba(35,59,96,.15); }
+    .admin-language-menu__list a { display: flex; align-items: center; gap: 8px; padding: 7px 8px; color: #385173; border-radius: 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .admin-language-menu__list a:hover,.admin-language-menu__list a.is-active { color: #f05222; background: #fff0ea; }
     .navbar-search-shortcut {
         position: absolute;
         right: 14px;

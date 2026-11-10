@@ -34,8 +34,16 @@ class UserController extends Controller
         $widget['total_device'] = Device::belongsToUser()->count();
         $widget['connected_device'] = Device::belongsToUser()->connected()->count();
         $widget['disconnected_device'] = Device::belongsToUser()->disconnected()->count();
+        $devices = Device::belongsToUser()
+            ->withCount([
+                'sms as today_sent_count' => fn ($query) => $query
+                    ->whereDate('created_at', today())
+                    ->where('status', Status::SMS_DELIVERED),
+            ])
+            ->latest('id')
+            ->get();
 
-        return view('Template::user.dashboard', compact('pageTitle', 'widget', 'user', 'sms', 'activePlan'));
+        return view('Template::user.dashboard', compact('pageTitle', 'widget', 'user', 'sms', 'activePlan', 'devices'));
     }
 
     public function depositHistory(Request $request)

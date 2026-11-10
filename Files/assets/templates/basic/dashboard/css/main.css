@@ -2897,3 +2897,162 @@ label.required:after {
     padding: 5px;
     font-size: 16px;
 }
+
+/* Spamr dashboard design system: shared rounded surfaces across every user page. */
+.dashboard-wrapper {
+    background: #f5f8fc;
+}
+
+.dashboard-container .card,
+.dashboard-container .custom--card,
+.dashboard-container .custom--modal .modal-content,
+.dashboard-container .accordion-item {
+    border: 1px solid #dce5f1 !important;
+    border-radius: 16px !important;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(33, 56, 91, .05);
+}
+
+.dashboard-container .card:not(.responsive-filter-card),
+.dashboard-container .custom--card {
+    overflow: hidden;
+}
+
+.dashboard-container .responsive-filter-card {
+    border-radius: 14px !important;
+    box-shadow: 0 4px 14px rgba(33, 56, 91, .04);
+}
+
+.dashboard-container .card-header,
+.dashboard-container .card-footer {
+    padding: 16px 20px !important;
+    border-color: #e6edf5 !important;
+    background: #fff !important;
+}
+
+.dashboard-container .card-header .title,
+.dashboard-container .card-header h5,
+.dashboard-container .card-header h6 {
+    color: #183758;
+    font-weight: 700;
+}
+
+.dashboard-container .card-body {
+    padding: 20px;
+}
+
+.dashboard-container .btn {
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+.dashboard-container .btn:hover,
+.dashboard-container .btn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(29, 75, 121, .14);
+}
+
+.dashboard-container .btn--base {
+    box-shadow: 0 5px 12px rgba(255, 92, 24, .18);
+}
+
+.dashboard-container .btn--sm {
+    min-height: 32px;
+    padding: 6px 11px;
+    border-radius: 8px;
+    font-size: 11px;
+}
+
+.dashboard-container .form--control,
+.dashboard-container .form-control,
+.dashboard-container .form-select,
+.dashboard-container .select2-container--default .select2-selection--single,
+.dashboard-container .select2-container--default .select2-selection--multiple {
+    min-height: 44px;
+    border-color: #d6e1ed !important;
+    border-radius: 10px !important;
+    background: #fcfdff;
+    box-shadow: none !important;
+}
+
+.dashboard-container .form--control:focus,
+.dashboard-container .form-control:focus,
+.dashboard-container .form-select:focus,
+.dashboard-container .select2-container--default.select2-container--focus .select2-selection--multiple,
+.dashboard-container .select2-container--default.select2-container--open .select2-selection--single {
+    border-color: #14a9e7 !important;
+    box-shadow: 0 0 0 3px rgba(20, 169, 231, .10) !important;
+}
+
+.dashboard-container textarea.form--control,
+.dashboard-container textarea.form-control {
+    min-height: 118px;
+    border-radius: 12px !important;
+}
+
+.dashboard-container .table-responsive {
+    border: 1px solid #e1eaf4;
+    border-radius: 12px;
+}
+
+.dashboard-container .custom--table thead tr,
+.dashboard-container table thead tr {
+    background: #f7faff;
+}
+
+.dashboard-container .custom--table thead th,
+.dashboard-container table thead th {
+    padding: 13px 14px;
+    color: #5c7395;
+    border-color: #dce5f1;
+    background: transparent;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.dashboard-container .custom--table tbody td,
+.dashboard-container table tbody td {
+    padding: 13px 14px;
+    color: #526b8d;
+    border-color: #edf1f5;
+    vertical-align: middle;
+}
+
+.dashboard-container .custom--table tbody tr:hover {
+    background: #fbfdff;
+}
+
+.dashboard-container .alert,
+.dashboard-container .notice,
+.dashboard-container .empty-message-row td {
+    border-radius: 12px;
+}
+
+.dashboard-container .pagination .page-link {
+    min-width: 34px;
+    margin: 0 2px;
+    border: 1px solid #dce5f1;
+    border-radius: 8px;
+    color: #3c5d81;
+    box-shadow: none;
+}
+
+.dashboard-container .pagination .active .page-link {
+    color: #fff;
+    border-color: hsl(var(--base));
+    background: hsl(var(--base));
+}
+
+@media (max-width: 575px) {
+    .dashboard-container .card-body { padding: 15px; }
+    .dashboard-container .card-header,
+    .dashboard-container .card-footer { padding: 14px 15px !important; }
+    .dashboard-container .btn { padding-inline: 12px; }
+}

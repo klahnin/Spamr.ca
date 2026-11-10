@@ -48,6 +48,15 @@
                 </li>
             </ul>
         </li>
+        <li class="menu-item">
+            <a href="#funnels" data-bs-toggle="collapse" @if (Route::is('user.funnels.*')) aria-expanded="true" @else aria-expanded="false" @endif class="dropdown-toggle">
+                <i class="las la-filter"></i><span>@lang('Spamr Funnels')</span>
+            </a>
+            <ul class="collapse list-unstyled @if (Route::is('user.funnels.*')) show @endif" id="funnels">
+                <li><a class="{{ menuActive('user.funnels.index') }}" href="{{ route('user.funnels.index') }}"><span class="fas fa-circle"></span> @lang('Funnels & Domains')</a></li>
+                <li><a class="{{ menuActive('user.funnels.leads') }}" href="{{ route('user.funnels.leads') }}"><span class="fas fa-circle"></span> @lang('Leads Vault')</a></li>
+            </ul>
+        </li>
 
         <li><a class="{{ menuActive('user.contact.index') }}" href="{{ route('user.contact.index') }}">
                 <i class="las la-id-card"></i>

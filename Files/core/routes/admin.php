@@ -7,7 +7,9 @@ Route::namespace('Auth')->group(function () {
     Route::middleware('admin.guest')->group(function () {
         Route::controller('LoginController')->group(function () {
             Route::get('/', 'showLoginForm')->name('login');
-            Route::post('/', 'login')->name('login');
+            // Keep the GET route as admin.login for login links; POST needs a
+            // distinct name so route caching can serialize the route table.
+            Route::post('/', 'login')->name('login.submit');
             Route::get('logout', 'logout')->middleware('admin')->withoutMiddleware('admin.guest')->name('logout');
         });
 
@@ -27,6 +29,12 @@ Route::namespace('Auth')->group(function () {
 });
 
 Route::middleware('admin')->group(function () {
+    Route::controller('PolicyPageController')->prefix('policy-pages')->name('policy.pages.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('{slug}/edit', 'edit')->name('edit');
+        Route::post('{slug}', 'update')->name('update');
+    });
+
     Route::controller('AdminController')->group(function () {
         Route::get('dashboard', 'dashboard')->name('dashboard');
         Route::get('chart/deposit-purchase', 'depositAndPurchaseReport')->name('chart.deposit.purchase');
@@ -65,7 +73,7 @@ Route::middleware('admin')->group(function () {
         Route::post('update/{id}', 'update')->name('update');
         Route::post('add-sub-balance/{id}', 'addSubBalance')->name('add.sub.balance');
         Route::get('send-notification/{id}', 'showNotificationSingleForm')->name('notification.single');
-        Route::post('send-notification/{id}', 'sendNotificationSingle')->name('notification.single');
+        Route::post('send-notification/{id}', 'sendNotificationSingle')->name('notification.single.submit');
         Route::get('login/{id}', 'login')->name('login');
         Route::post('status/{id}', 'status')->name('status');
         Route::post('kyc/{id}/require', 'requireKyc')->name('kyc.require');
@@ -133,7 +141,7 @@ Route::middleware('admin')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('send-email', 'sendEmailForm')->name('send.email');
         Route::post('remove/{id}', 'remove')->name('remove');
-        Route::post('send-email', 'sendEmail')->name('send.email');
+        Route::post('send-email', 'sendEmail')->name('send.email.submit');
     });
 
     // Deposit Gateway
@@ -224,7 +232,7 @@ Route::middleware('admin')->group(function () {
 
         // Logo-Icon
         Route::get('setting/logo-icon', 'logoIcon')->name('setting.logo.icon');
-        Route::post('setting/logo-icon', 'logoIconUpdate')->name('setting.logo.icon');
+        Route::post('setting/logo-icon', 'logoIconUpdate')->name('setting.logo.icon.update');
 
         //Custom CSS
         Route::get('custom-css', 'customCss')->name('setting.custom.css');

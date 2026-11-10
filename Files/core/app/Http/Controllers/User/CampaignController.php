@@ -13,11 +13,15 @@ use App\Models\GroupContact;
 use App\Models\Sms;
 use App\Models\Template;
 use App\Rules\FileTypeValidate;
+use App\Services\CampaignDestinationPolicy;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CampaignController extends Controller
 {
+
     public function index()
     {
         $pageTitle = 'Campaign History';
@@ -42,6 +46,7 @@ class CampaignController extends Controller
 
     public function save(Request $request)
     {
+        $destinationPolicy = app(CampaignDestinationPolicy::class);
         $request->validate([
             'title'          => 'required',
             'device'         => 'required|integer',
@@ -53,6 +58,10 @@ class CampaignController extends Controller
             'group'          => 'nullable|array',
             'mobile_numbers' => 'nullable|required_if:selection_type,3',
             'mobile_code'    => 'nullable|required_if:selection_type,3',
+            'country_code'   => ['nullable', 'required_if:selection_type,3', Rule::notIn(CampaignDestinationPolicy::RESTRICTED_COUNTRY_CODES)],
+            'country'        => ['nullable', 'required_if:selection_type,3', Rule::notIn(CampaignDestinationPolicy::RESTRICTED_COUNTRY_NAMES)],
+            'random_delay_range' => 'required|in:0,3-6,6-12',
+            'load_balance_mode' => 'required|in:selected_sim,evenly_split',
             'file'           => ['nullable', 'required_if:selection_type,4', new FileTypeValidate(['csv', 'xlsx', 'txt'])],
             'message'        => 'required|string',
         ]);
@@ -70,19 +79,24 @@ class CampaignController extends Controller
 
         $user = auth()->user();
         $numbers = [];
+        $eligibleContact = fn (Contact $contact) => !$destinationPolicy->isRestrictedDestination($contact->country, $contact->state);
 
         if ($request->selection_type == Status::CONTACT) {
             if ($request->select_all_contact) {
-                $numbers = Contact::where('status', Status::ENABLE)
-                    ->select('dial_code', 'mobile')
+                $numbers = Contact::belongsToUser()
+                    ->active()
+                    ->select('dial_code', 'mobile', 'country', 'state')
                     ->get()
+                    ->filter($eligibleContact)
                     ->map(fn($contact) => $contact->dial_code . $contact->mobile)
                     ->toArray();
             } elseif ($request->contact_list) {
-                $numbers = Contact::where('status', Status::ENABLE)
+                $numbers = Contact::belongsToUser()
+                    ->active()
                     ->whereIn('id', $request->contact_list ?? [])
-                    ->select('dial_code', 'mobile')
+                    ->select('dial_code', 'mobile', 'country', 'state')
                     ->get()
+                    ->filter($eligibleContact)
                     ->map(fn($contact) => $contact->dial_code . $contact->mobile)
                     ->toArray();
             }
@@ -90,21 +104,19 @@ class CampaignController extends Controller
 
             if ($request->select_all_group) {
                 $numbers = GroupContact::belongsToUser()
-                    ->whereHas('contact')
-                    ->with(['contact' => function ($query) {
-                        $query->where('status', Status::ENABLE);
-                    }])
+                    ->whereHas('contact', fn ($query) => $query->active())
+                    ->with('contact:id,dial_code,mobile,country,state,status')
                     ->get()
+                    ->filter(fn ($groupContact) => $groupContact->contact && $eligibleContact($groupContact->contact))
                     ->map(fn($groupContact) => $groupContact->contact->dial_code . $groupContact->contact->mobile)
                     ->toArray();
             } elseif ($request->group) {
                 $numbers = GroupContact::belongsToUser()
-                    ->whereHas('contact')
+                    ->whereHas('contact', fn ($query) => $query->active())
                     ->whereIn('group_id', $request->group ?? [])
-                    ->with(['contact' => function ($query) {
-                        $query->where('status', Status::ENABLE);
-                    }])
+                    ->with('contact:id,dial_code,mobile,country,state,status')
                     ->get()
+                    ->filter(fn ($groupContact) => $groupContact->contact && $eligibleContact($groupContact->contact))
                     ->map(fn($groupContact) => $groupContact->contact->dial_code . $groupContact->contact->mobile)
                     ->toArray();
             }
@@ -119,6 +131,14 @@ class CampaignController extends Controller
                 try {
                     $import = importFileReader($request->file, $columnNames, $columnNames);
                     $readData = $import->getReadData();
+
+                    $hasRestrictedRecipient = collect($readData)->contains(function ($row) use ($destinationPolicy) {
+                        return $destinationPolicy->isRestrictedDestination($row[5] ?? null, $row[7] ?? null);
+                    });
+                    if ($hasRestrictedRecipient) {
+                        $notify[] = ['error', 'The uploaded file contains a number from a restricted country.'];
+                        return back()->withNotify($notify)->withInput();
+                    }
 
                     $numbers = array_map(fn($row) => $row[3] . $row[4], $readData);
                 } catch (Exception $ex) {
@@ -169,6 +189,28 @@ class CampaignController extends Controller
         }
 
         $deviceSlot = $device->sim[$request->sim];
+        $dispatchTargets = collect([['device' => $device, 'slot' => $deviceSlot]]);
+
+        if ($request->load_balance_mode === 'evenly_split') {
+            $dispatchTargets = Device::belongsToUser()
+                ->connected()
+                ->get()
+                ->flatMap(function ($connectedDevice) {
+                    return collect($connectedDevice->sim ?? [])
+                        ->filter(fn ($slot) => is_array($slot) && isset($slot['slot']))
+                        ->map(fn ($slot) => ['device' => $connectedDevice, 'slot' => $slot]);
+                })
+                ->values();
+
+            if ($dispatchTargets->isEmpty()) {
+                $notify[] = ['error', 'No connected Android SIM is available for load balancing.'];
+                return back()->withNotify($notify)->withInput();
+            }
+        }
+
+        [$delayMin, $delayMax] = $request->random_delay_range === '0'
+            ? [0, 0]
+            : array_map('intval', explode('-', $request->random_delay_range));
 
         $campaign             = new Campaign();
         $campaign->user_id    = $user->id;
@@ -177,6 +219,9 @@ class CampaignController extends Controller
         $campaign->et         = $eventTrigger;
         $campaign->status     = $status;
         $campaign->message    = $request->message;
+        $campaign->random_delay_min_seconds = $delayMin;
+        $campaign->random_delay_max_seconds = $delayMax;
+        $campaign->load_balance_mode = $request->load_balance_mode;
         $campaign->save();
 
         $batch = createBatch();
@@ -192,19 +237,27 @@ class CampaignController extends Controller
         }
 
         $messages = [];
-        foreach ($numbers as $number) {
+        $dispatchAt = Carbon::parse($schedule);
+        $usesRandomDelay = $delayMax > 0;
+        foreach ($numbers as $index => $number) {
+            $dispatchTarget = $dispatchTargets[$index % $dispatchTargets->count()];
+            if ($index > 0 && $usesRandomDelay) {
+                $dispatchAt->addSeconds(random_int($delayMin, $delayMax));
+            }
+            $messageSchedule = $dispatchAt->format('Y-m-d H:i:s');
             $sms                     = new Sms();
-            $sms->device_id          = $device->id;
+            $sms->device_id          = $dispatchTarget['device']->id;
             $sms->user_id            = $campaign->user->id;
             $sms->campaign_id        = $campaign->id;
-            $sms->device_slot_number = $deviceSlot['slot'];
-            $sms->device_slot_name   = $deviceSlot['name'];
+            $sms->device_slot_number = $dispatchTarget['slot']['slot'];
+            $sms->device_slot_name   = $dispatchTarget['slot']['name'] ?? '';
             $sms->mobile_number      = $number;
             $sms->message            = $campaign->message;
-            $sms->schedule           = $schedule;
+            $sms->schedule           = $messageSchedule;
             $sms->batch_id           = $batch->id;
             $sms->status             = $status;
-            $sms->et                 = $eventTrigger;
+            // Delayed messages stay pending; the server dispatcher releases only those due.
+            $sms->et                 = $usesRandomDelay ? Status::NO : $eventTrigger;
             $sms->save();
 
             $messages[] = $sms;
@@ -212,14 +265,22 @@ class CampaignController extends Controller
 
         $user->subtractLimitCounter('available_sms', count($messages));
 
-        if ($eventTrigger) {
-            event(new MessageSend([
-                'success'       => true,
-                'device_id'     => $device->device_id,
-                "original_data" => [
-                    'message' => $messages,
-                ]
-            ]));
+        if ($eventTrigger && !$usesRandomDelay) {
+            collect($messages)->groupBy('device_id')->each(function ($deviceMessages, $deviceId) use ($delayMin, $delayMax, $request) {
+                $targetDevice = Device::find($deviceId);
+                event(new MessageSend([
+                    'success' => true,
+                    'device_id' => $targetDevice?->device_id,
+                    'original_data' => [
+                        'message' => $deviceMessages->values(),
+                        'dispatch_options' => [
+                            'random_delay_min_seconds' => $delayMin,
+                            'random_delay_max_seconds' => $delayMax,
+                            'load_balance_mode' => $request->load_balance_mode,
+                        ],
+                    ],
+                ]));
+            });
         }
 
         $notify[] = ['success', 'Campaign created successfully'];
@@ -231,4 +292,5 @@ class CampaignController extends Controller
         Campaign::belongsToUser()->findOrFail($id);
         return Campaign::changeStatus($id);
     }
+
 }

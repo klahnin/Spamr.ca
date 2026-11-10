@@ -55,18 +55,6 @@ class GeneralSettingController extends Controller
         $content = '<?php $timezone = "' . $timezone . '" ?>';
         file_put_contents($timezoneFile, $content);
 
-        //pusher config
-        $pusherConfigFile = config_path('pusher.php');
-
-        $pusherConfig = '<?php' . PHP_EOL .
-            '$pusherAppId       = ' . '"' . $request->pusher_app_id . '"' . ";" . PHP_EOL .
-            '$pusherAppKey      =' . '"' . $request->pusher_app_key . '"' . ";" . PHP_EOL .
-            '$pusherAppSecret   =' . '"' . $request->pusher_app_secret . '"' . ';' . PHP_EOL .
-            '$pusherAppCluster  =' . '"' . $request->pusher_app_cluster . '"' . ';' . PHP_EOL .
-            "?>";
-
-        file_put_contents($pusherConfigFile, $pusherConfig);
-
         RequiredConfig::configured('general_setting');
 
         $notify[] = ['success', 'General setting updated successfully'];

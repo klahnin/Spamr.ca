@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Model;
 class Campaign extends Model
 {
     use GlobalStatus;
+
+    protected $casts = [
+        'random_delay_min_seconds' => 'integer',
+        'random_delay_max_seconds' => 'integer',
+    ];
     public function user()
     {
         return $this->belongsTo(User::class);

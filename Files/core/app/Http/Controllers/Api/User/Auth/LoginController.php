@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -66,6 +67,8 @@ class LoginController extends Controller
 
                 $user->subtractLimitCounter('available_device_limit');
             }
+            // This server-generated UUID is the non-hardware identifier used by device-scoped APIs.
+            $device->installation_id ??= (string) Str::uuid();
             $allSim = explode(',', $request->sim);
             foreach ($allSim as $k => $sim) {
                 $simData[]    = [
@@ -84,7 +87,7 @@ class LoginController extends Controller
             DB::table('personal_access_tokens')
                 ->where('tokenable_id', $user->id)
                 ->where('tokenable_type', User::class)
-                ->where('device_id', $device->device_id)
+                ->whereIn('device_id', [$device->device_id, $device->installation_id])
                 ->delete();
 
             $request->user()->currentAccessToken()?->delete();
@@ -113,7 +116,7 @@ class LoginController extends Controller
         $device->status = Status::DISABLE;
         $device->save();
 
-        DB::table('personal_access_tokens')->where('device_id', $device->device_id)->delete();
+        DB::table('personal_access_tokens')->whereIn('device_id', [$device->device_id, $device->installation_id])->delete();
         event(new DeviceLogOut($device->device_id));
         return  apiResponse(true, 200, "Logout Successful");
     }
@@ -121,13 +124,15 @@ class LoginController extends Controller
     protected function response(string $deviceId)
     {
         $user = auth()->user();
-        $newToken = $user->createToken('device:' . $deviceId, ['device:access']);
-        $newToken->accessToken->forceFill(['device_id' => $deviceId])->save();
+        $device = Device::where('user_id', $user->id)->where('device_id', $deviceId)->firstOrFail();
+        $newToken = $user->createToken('device:' . $device->installation_id, ['device:access']);
+        $newToken->accessToken->forceFill(['device_id' => $device->installation_id])->save();
 
         $data  = [
             'user'         => $user,
             'access_token' => $newToken->plainTextToken,
             'token_type'   => 'Bearer',
+            'installation_id' => $device->installation_id,
             'base_url'     => route('home'),
             'pusher'       => [
                 'pusher_key'     => config('app.PUSHER_APP_KEY'),

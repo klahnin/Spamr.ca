@@ -1,6 +1,12 @@
 <?php
-$pusherAppId       = "1761451";
-$pusherAppKey      ="5d5588cff51ff3f6a94b";
-$pusherAppSecret   ="2e3956c8c455d06f66f9";
-$pusherAppCluster  ="ap2";
-?>
+
+/*
+ * Credentials must be injected by the deployment environment.  Do not place
+ * Pusher credentials in source control, cached config, dashboard markup, or
+ * API responses.  The values formerly present in this file must be rotated
+ * before a production deployment.
+ */
+$pusherAppId = env('PUSHER_APP_ID');
+$pusherAppKey = env('PUSHER_APP_KEY');
+$pusherAppSecret = env('PUSHER_APP_SECRET');
+$pusherAppCluster = env('PUSHER_APP_CLUSTER', 'mt1');

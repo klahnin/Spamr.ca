@@ -877,10 +877,15 @@ h6.right-highlited__title {
 }
 
 .banner-section--centered .banner-content__title {
-    font-size: clamp(2.5rem, 5vw, 4.25rem);
+    font-size: clamp(2.35rem, 4.35vw, 3.6rem);
     line-height: 1.08;
-    max-width: 780px;
+    max-width: 860px;
     margin: 0 auto;
+}
+
+.banner-section--centered .banner-content__title span {
+    display: block;
+    white-space: nowrap;
 }
 
 .banner-section--centered .banner-content__text {
@@ -901,6 +906,15 @@ h6.right-highlited__title {
     font-size: .875rem;
 }
 
+/* Dissolve the hero into the following section instead of using a visible divider. */
+.banner-section--centered::before {
+    bottom: -18px;
+    height: 42px;
+    opacity: .035;
+    filter: blur(9px);
+    background: linear-gradient(90deg, rgba(255, 72, 0, 0), rgba(208, 84, 188, .7) 28%, rgba(0, 146, 244, .7) 55%, rgba(21, 196, 116, 0));
+}
+
 @media screen and (max-width: 575px) {
     .banner-section--centered {
         min-height: auto;
@@ -911,4 +925,19 @@ h6.right-highlited__title {
         flex-direction: column;
         gap: 12px;
     }
+
+    .banner-section--centered .banner-content__title span {
+        white-space: normal;
+    }
 }
+
+/* Image-based language picker: native select controls cannot render flags reliably. */
+.spamr-language-menu { position: relative; z-index: 20; }
+.spamr-language-menu summary { display: flex; align-items: center; gap: 7px; min-height: 32px; padding: 5px 9px; color: #385173; border: 1px solid #d9e4f1; border-radius: 8px; background: #f8fbff; cursor: pointer; font-size: 11px; font-weight: 600; list-style: none; }
+.spamr-language-menu summary::-webkit-details-marker { display: none; }
+.spamr-language-menu summary>img,.spamr-language-menu__list img { width: 18px; height: 12px; border-radius: 2px; object-fit: cover; box-shadow: 0 1px 2px rgba(20,44,78,.18); }
+.spamr-language-menu summary i { margin-left: 1px; font-size: 13px; transition: transform .18s ease; }
+.spamr-language-menu[open] summary i { transform: rotate(180deg); }
+.spamr-language-menu__list { position: absolute; top: calc(100% + 6px); right: 0; display: grid; min-width: 145px; padding: 5px; border: 1px solid #dce6f1; border-radius: 10px; background: #fff; box-shadow: 0 12px 28px rgba(35,59,96,.15); }
+.spamr-language-menu__list a { display: flex; align-items: center; gap: 8px; padding: 7px 8px; color: #385173; border-radius: 7px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.spamr-language-menu__list a:hover,.spamr-language-menu__list a.is-active { color: #f05222; background: #fff0ea; }

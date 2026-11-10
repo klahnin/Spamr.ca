@@ -44,6 +44,7 @@
                                     <th>@lang('Android Version')</th>
                                     <th>@lang('App Version')</th>
                                     <th>@lang('Status')</th>
+                                    <th>@lang('Action')</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -62,6 +63,13 @@
                                             @else
                                                 <span class="badge badge--danger">@lang('Disconnected')</span>
                                             @endif
+                                        </td>
+                                        <td>
+                                            <form action="{{ route('user.device.destroy', $device->installation_id) }}" method="POST" onsubmit="return confirm('@lang('Remove this device and revoke its access token?')');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn--sm btn-outline--danger"><i class="las la-unlink"></i> @lang('Revoke')</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 @empty
@@ -102,10 +110,16 @@
                             </a>
                         </li>
                         <li class="list-group-item"> @lang('Install our android app on your mobile device.')</li>
-                        <li class="list-group-item"> @lang('Scan the below QR code to connect your device.')</li>
+                        <li class="list-group-item"> @lang('Scan the below QR code, or enter the one-time pairing code in the SpamrDevice app.')</li>
                     </ul>
                     <div class="text-center pb-3">
                         <img src="{{ $qrCodeImgSrc }}" class="b--5 p-3 border--base rounded" alt="">
+                    </div>
+                    <div class="manual-pairing-code mx-3 mb-4 text-center">
+                        <span>@lang('One-time pairing code')</span>
+                        <code id="manualPairingCode">{{ $manualPairingCode }}</code>
+                        <button type="button" class="btn btn--sm btn-outline--base copy-pairing-code" data-copy-target="manualPairingCode"><i class="las la-copy"></i> @lang('Copy code')</button>
+                        <small>@lang('This code expires in 10 minutes and can be used once. Do not share it.')</small>
                     </div>
                 </div>
             </div>
@@ -141,6 +155,16 @@
             $('.addBtn').on('click', function(e) {
                 $("#modal").modal('show');
             });
+
+            $('.copy-pairing-code').on('click', function () {
+                const code = document.getElementById($(this).data('copy-target'))?.textContent?.trim();
+                if (!code || !navigator.clipboard) return;
+                navigator.clipboard.writeText(code).then(() => $(this).text("@lang('Copied')"));
+            });
+
+            @if(request()->boolean('pair') || $allDevice->total() === 0)
+                $('#modal').modal('show');
+            @endif
             const pusherConnection = (eventName) => {
                 pusher.connection.bind('connected', () => {
                     const SOCKET_ID = pusher.connection.socket_id;
@@ -196,6 +220,7 @@
                             <td  class="device-status">
                                 <span class="badge badge--success">@lang('Connected')</span>
                             </td>
+                            <td></td>
                         </tr>`;
                         $("#device-table").find("tbody").prepend(html);
                         $("#device-table").find(".empty-message-row").remove();
@@ -219,6 +244,10 @@
 
 @push('style')
     <style>
+        .manual-pairing-code { display: grid; gap: 8px; padding: 16px; border: 1px solid #ffd5bd; border-radius: 12px; background: #fff9f5; }
+        .manual-pairing-code > span { color: #385173; font-size: 12px; font-weight: 700; }
+        .manual-pairing-code code { display: block; color: #f05222; font-size: 20px; font-weight: 800; letter-spacing: .08em; }
+        .manual-pairing-code small { color: #6f82a0; font-size: 11px; }
         .custom--loader {
             position: fixed;
             width: 100%;

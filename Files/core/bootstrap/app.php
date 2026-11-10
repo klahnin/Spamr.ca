@@ -5,6 +5,8 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\AuthenticateApi;
 use App\Http\Middleware\CheckStatus;
 use App\Http\Middleware\Demo;
+use App\Http\Middleware\EnsureDeviceTokenMatchesRoute;
+use App\Http\Middleware\EnsurePairingSessionToken;
 use App\Http\Middleware\HasActivePlan;
 use App\Http\Middleware\MaintenanceMode;
 use App\Http\Middleware\RedirectIfAdmin;
@@ -46,6 +48,18 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Trust only the reverse-proxy addresses configured by the deployment.
+        // Do not use a wildcard in production unless the infrastructure itself
+        // guarantees that all incoming traffic has passed through that proxy.
+        $trustedProxies = array_values(array_filter(array_map(
+            'trim',
+            explode(',', (string) env('TRUSTED_PROXIES', ''))
+        )));
+
+        if ($trustedProxies !== []) {
+            $middleware->trustProxies(at: $trustedProxies);
+        }
+
         $middleware->web(append: [
             \App\Http\Middleware\LanguageMiddleware::class,
             \App\Http\Middleware\ActiveTemplateMiddleware::class,
@@ -72,8 +86,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'maintenance' => MaintenanceMode::class,
 
             'apiKey' => ApiKey::class,
+            'abilities' => \Laravel\Sanctum\Http\Middleware\CheckAbilities::class,
+            'ability' => \Laravel\Sanctum\Http\Middleware\CheckForAnyAbility::class,
             'has.active.plan' => HasActivePlan::class,
             'kyc.required' => \App\Http\Middleware\RequireKyc::class,
+            'device.token' => EnsureDeviceTokenMatchesRoute::class,
+            'device.pairing' => EnsurePairingSessionToken::class,
         ]);
 
         $middleware->preventRequestForgery(
@@ -87,6 +105,26 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
         $exceptions->respond(function (Response $response) {
+            if (request()->is('api/*') && $response->getStatusCode() === 429) {
+                return response()->json([
+                    'success' => false,
+                    'code' => 429,
+                    'message' => 'Too many requests. Please retry after the indicated delay.',
+                ], 429, [
+                    'Retry-After' => $response->headers->get('Retry-After', '60'),
+                ]);
+            }
+
+            if (request()->is('api/v2/*')) {
+                if ($response->getStatusCode() >= 500) {
+                    return response()->json([
+                        'success' => false,
+                        'code' => 500,
+                        'message' => 'An unexpected server error occurred.',
+                    ], 500);
+                }
+            }
+
             if ($response->getStatusCode() === 401) {
                 if (request()->is('api/*')) {
                     $notify[] = 'Unauthorized request';

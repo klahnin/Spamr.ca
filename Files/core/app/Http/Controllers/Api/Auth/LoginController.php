@@ -58,20 +58,29 @@ class LoginController extends Controller
         }
 
         if ($validator->fails()) {
-            return responseError('validation_error', $validator->errors());
+            return response()->json([
+                'remark' => 'validation_error',
+                'status' => 'error',
+                'message' => ['error' => $validator->errors()->all()],
+                'errors' => $validator->errors(),
+            ], 422);
         }
 
 
         $credentials = request([$this->username, 'password']);
         if (!Auth::attempt($credentials)) {
-            $notify[] = 'Unauthorized user';
-            return responseError('unauthorized_user', $notify);
+            return response()->json([
+                'remark' => 'unauthorized_user',
+                'status' => 'error',
+                'message' => ['error' => ['Invalid username or password.']],
+            ], 401);
         }
 
         $user = $request->user();
         // This token only bridges credential login to device pairing.  It is
         // revoked when pairing succeeds; long-lived API access is device-scoped.
-        $tokenResult = $user->createToken('device_pairing', ['device:pair'])->plainTextToken;
+        $pairingExpiresAt = now()->addMinutes(max(1, (int) config('device.pairing_session_ttl_minutes')));
+        $tokenResult = $user->createToken('device_pairing', ['device:pair'], $pairingExpiresAt)->plainTextToken;
 
         $this->authenticated($request, $user);
         $notify[] = 'Login Successful';
@@ -80,6 +89,7 @@ class LoginController extends Controller
             'user' => auth()->user(),
             'access_token' => $tokenResult,
             'token_type' => 'Bearer',
+            'expires_at' => $pairingExpiresAt->toISOString(),
             // A Pusher client needs the public key and cluster only.  Private
             // channel signatures are produced by the authenticated endpoint.
             'pusher' => [

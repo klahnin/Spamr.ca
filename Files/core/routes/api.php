@@ -17,7 +17,7 @@ Route::namespace('Api')->name('api.')->prefix('v1')->group(function () {
 
     Route::namespace('Auth')->group(function () {
         Route::controller('LoginController')->group(function () {
-            Route::post('login', 'login');
+            Route::post('login', 'login')->middleware('throttle:5,1');
         });
 
         Route::controller('ForgotPasswordController')->group(function () {
@@ -58,4 +58,15 @@ Route::namespace('Api')->name('api.')->prefix('v1')->group(function () {
             Route::post('pusher/auth/{socketId}/{channelName}', 'authentication');
         });
     });
+});
+
+Route::namespace('Api\\V2')->name('api.v2.')->prefix('v2')->group(function () {
+    Route::post('devices/pair', 'DevicePairingController@store')
+        ->middleware(['throttle:10,1', 'device.pairing'])
+        ->name('devices.pair');
+
+    Route::put('devices/{installationId}/profile', 'DeviceProfileController@update')
+        ->whereUuid('installationId')
+        ->middleware(['throttle:60,1', 'device.token:device:profile:write'])
+        ->name('devices.profile.update');
 });

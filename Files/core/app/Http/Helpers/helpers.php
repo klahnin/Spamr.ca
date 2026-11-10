@@ -95,7 +95,7 @@ function siteLogo($type = null)
 
 function siteFavicon()
 {
-    return getImage(getFilePath('logoIcon') . '/favicon.png');
+    return getImage(getFilePath('logoIcon') . '/favicon.ico');
 }
 
 function loadReCaptcha()
@@ -170,7 +170,7 @@ function removeElement($array, $value)
 
 function cryptoQR($wallet)
 {
-    return "https://api.qrserver.com/v1/create-qr-code/?data=$wallet&size=300x300&ecc=m";
+    return 'https://api.qrserver.com/v1/create-qr-code/?data=' . rawurlencode($wallet) . '&size=300x300&ecc=m';
 }
 
 function keyToTitle($text)
@@ -436,7 +436,7 @@ function showEmailAddress($email)
 
 function getRealIP()
 {
-    $ip = $_SERVER["REMOTE_ADDR"];
+    $ip = $_SERVER['REMOTE_ADDR'] ?? request()->ip() ?? '127.0.0.1';
     //Deep detect ip
     if (filter_var(isset($_SERVER['HTTP_FORWARDED']) ? $_SERVER['HTTP_FORWARDED'] : '', FILTER_VALIDATE_IP)) {
         $ip = $_SERVER['HTTP_FORWARDED'];

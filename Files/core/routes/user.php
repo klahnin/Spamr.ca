@@ -120,6 +120,7 @@ Route::middleware('auth')->name('user.')->group(function () {
             // Manage Device
             Route::prefix('device')->controller("DeviceController")->name('device.')->group(function () {
                 Route::get('/', 'index')->name('index');
+                Route::delete('{installationId}', 'destroy')->whereUuid('installationId')->name('destroy');
             });
 
             // SMS Manager
@@ -127,7 +128,7 @@ Route::middleware('auth')->name('user.')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('send', 'send')->name('send');
                 Route::middleware('has.active.plan')->group(function () {
-                    Route::post('send', 'sendSMS')->name('send');
+                    Route::post('send', 'sendSMS')->name('send.submit');
                     Route::post('re-send/{id}', 'reSend')->name('resend');
                 });
             });
@@ -142,6 +143,14 @@ Route::middleware('auth')->name('user.')->group(function () {
                     Route::post('/update/{id}', 'save')->name('update');
                     Route::post('/status/{id}', 'status')->name('status');
                 });
+            });
+
+            Route::controller('FunnelController')->prefix('funnels')->name('funnels.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('domains', 'storeDomain')->name('domains.store');
+                Route::post('domains/{id}/verify', 'verifyDomain')->name('domains.verify');
+                Route::post('/', 'storeFunnel')->name('store');
+                Route::get('leads', 'leads')->name('leads');
             });
 
             // Batch

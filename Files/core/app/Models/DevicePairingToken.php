@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DevicePairingToken extends Model
 {
-    protected $fillable = ['user_id', 'token_hash', 'expires_at', 'used_at'];
+    protected $fillable = ['user_id', 'token_hash', 'manual_code_hash', 'expires_at', 'used_at'];
 
     protected $casts = [
         'expires_at' => 'datetime',

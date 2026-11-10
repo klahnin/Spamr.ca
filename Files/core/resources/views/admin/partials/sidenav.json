@@ -517,6 +517,13 @@
             "admin.apk"
         ]
     },
+    "policy_pages": {
+        "keyword": ["policy", "legal", "law enforcement", "compliance"],
+        "title": "Policy Pages",
+        "icon": "las la-file-contract",
+        "route_name": "admin.policy.pages.index",
+        "menu_active": "admin.policy.pages.*"
+    },
     "extra": {
         "title": "Extra",
         "icon": "la la-server",

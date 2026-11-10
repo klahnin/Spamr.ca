@@ -1,0 +1,43 @@
+# Replace app.example.com, /var/www/spamr/current, and the PHP-FPM socket.
+# Keep the Laravel project root outside the web root; expose only /public.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name app.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name app.example.com;
+
+    root /var/www/spamr/current/public;
+    index index.php;
+    client_max_body_size 10m;
+
+    ssl_certificate /etc/letsencrypt/live/app.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/app.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Frame-Options SAMEORIGIN always;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        try_files $uri =404;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT $realpath_root;
+        fastcgi_param HTTPS on;
+        fastcgi_param HTTP_X_FORWARDED_PROTO https;
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+    }
+
+    location ~ /\.(?!well-known) { deny all; }
+    location ~* /(\.env|composer\.(json|lock)|artisan|storage|vendor|database|deploy)/ { deny all; }
+}

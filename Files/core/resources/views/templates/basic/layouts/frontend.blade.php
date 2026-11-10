@@ -35,7 +35,7 @@
     @stack('fbComment')
 
     <div class="preloader">
-        <div class="loader"></div>
+        <img class="spamr-loading-icon" src="{{ asset('assets/images/logo_icon/spamr-loading-icon.png') }}" alt="{{ gs('site_name') }}">
     </div>
 
     <div class="body-overlay"></div>

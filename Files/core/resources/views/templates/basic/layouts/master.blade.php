@@ -29,10 +29,21 @@
 
     @stack('style')
 
+    <style>
+        .preloader { position: fixed; z-index: 999999; inset: 0; display: flex; align-items: center; justify-content: center; background: #fff; }
+        .spamr-loading-icon { width: clamp(86px, 12vw, 126px); height: auto; filter: drop-shadow(0 12px 18px rgba(255,96,12,.18)); transform-origin: center; animation: spamr-heartbeat 2.35s cubic-bezier(.4,0,.2,1) infinite; }
+        @keyframes spamr-heartbeat { 0%,100% { transform: scale(1); opacity: .92; } 16% { transform: scale(1.075); opacity: 1; } 30% { transform: scale(1.02); } 45% { transform: scale(1.105); } 62% { transform: scale(1); opacity: .94; } }
+        @media (prefers-reduced-motion: reduce) { .spamr-loading-icon { animation: none; } }
+    </style>
+
 </head>
 @php echo loadExtension('google-analytics') @endphp
 
 <body>
+
+    <div class="preloader">
+        <img class="spamr-loading-icon" src="{{ asset('assets/images/logo_icon/spamr-loading-icon.png') }}" alt="{{ gs('site_name') }}">
+    </div>
 
     <div class="overlay"></div>
 

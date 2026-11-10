@@ -9,9 +9,11 @@ use App\Models\Contact;
 use App\Models\Device;
 use App\Models\Sms;
 use App\Models\Template;
+use App\Services\CampaignDestinationPolicy;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class SmsController extends Controller
 {
@@ -49,7 +51,9 @@ class SmsController extends Controller
         $templates    = Template::belongsToUser()->active()->orderBy('id', 'DESC')->get();
         $info         = json_decode(json_encode(getIpInfo()), true);
         $mobileCode   = implode(',', $info['code'] ?? []);
-        $countries    = json_decode(file_get_contents(resource_path('views/partials/country.json')));
+        $countries    = collect(json_decode(file_get_contents(resource_path('views/partials/country.json'))))
+            ->reject(fn ($country, $code) => in_array($code, CampaignDestinationPolicy::RESTRICTED_COUNTRY_CODES, true))
+            ->all();
 
         return view('Template::user.sms.send', compact('pageTitle', 'templates', 'allDevice', 'mobileCode', 'countries', 'hasDevice'));
     }
@@ -171,6 +175,7 @@ class SmsController extends Controller
             'sim'          => 'required',
             'device'       => 'required|integer|exists:devices,id',
             'mobile_code'  => 'required',
+            'country_code' => ['required', 'string', Rule::notIn(CampaignDestinationPolicy::RESTRICTED_COUNTRY_CODES)],
             'mobile'       => 'required',
         ], [
             "date.required_if"    => "The date filed is required",

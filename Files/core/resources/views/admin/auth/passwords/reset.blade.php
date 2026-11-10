@@ -7,7 +7,8 @@
                     <div class="login-area">
                         <div class="login-wrapper">
                             <div class="login-wrapper__top">
-                                <h3 class="title text-white">@lang('Recover Account')</h3>
+                                <img class="login-brand" src="{{ siteLogo() }}" alt="{{ __(gs('site_name')) }}">
+                                <h3 class="title">@lang('Set a new password')</h3>
                             </div>
                             <div class="login-wrapper__body">
                                 <form action="{{ route('admin.password.change') }}" method="POST" class="login-form">
@@ -24,7 +25,7 @@
                                     </div>
                                     <button type="submit" class="btn cmn-btn w-100">@lang('Submit')</button>
                                     <div class="text-center mt-3">
-                                        <a href="{{ route('admin.login') }}" class="text-white"><i class="las la-sign-in-alt" aria-hidden="true"></i>@lang('Back to Login')</a>
+                                        <a href="{{ route('admin.login') }}" class="login-back-link"><i class="las la-sign-in-alt" aria-hidden="true"></i>@lang('Back to Login')</a>
                                     </div>
                                 </form>
                             </div>

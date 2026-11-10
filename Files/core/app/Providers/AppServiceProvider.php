@@ -79,7 +79,9 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
-        if (gs('force_ssl')) {
+        // Production is HTTPS-only. Local development remains available over
+        // HTTP for the Android emulator without weakening deployed traffic.
+        if ($this->app->environment('production') || gs('force_ssl')) {
             \URL::forceScheme('https');
         }
 

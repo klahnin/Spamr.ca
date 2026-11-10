@@ -19,7 +19,13 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    // Native Android requests are not governed by browser CORS. Keep the
+    // wildcard strictly for local development; deployed environments default
+    // to the configured application origin unless explicitly overridden.
+    'allowed_origins' => array_filter(explode(',', env(
+        'CORS_ALLOWED_ORIGINS',
+        env('APP_ENV') === 'local' ? '*' : env('APP_URL')
+    ))),
 
     'allowed_origins_patterns' => [],
 

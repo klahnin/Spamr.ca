@@ -15,7 +15,9 @@ return [
     |
     */
 
-    'default' => 'pusher',
+    // Broadcasting is opt-in. Environments that need Pusher must explicitly
+    // set BROADCAST_CONNECTION=pusher and provide all credentials via env.
+    'default' => env('BROADCAST_CONNECTION', 'log'),
 
     /*
     |--------------------------------------------------------------------------
