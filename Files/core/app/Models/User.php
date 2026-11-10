@@ -151,6 +151,11 @@ class User extends Authenticatable
         return $this->hasOne(ComplianceProfile::class);
     }
 
+    public function complianceOverride()
+    {
+        return $this->hasOne(ComplianceOverride::class);
+    }
+
     public function hasLimit($column, $quantity = 0, $hasInfinite = true)
     {
         if (!Schema::hasColumn('users', $column)) {

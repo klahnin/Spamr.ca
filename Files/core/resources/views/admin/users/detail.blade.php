@@ -235,6 +235,19 @@
                                     <input type="checkbox" data-width="100%" data-onstyle="-success" data-offstyle="-danger" data-bs-toggle="toggle" data-on="@lang('Verified')" data-off="@lang('Unverified')" name="sv" @if ($user->sv) checked @endif>
                                 </div>
                             </div>
+                            @php($hasSubmittedCompliance = (bool) $user->complianceProfile)
+                            @php($hasAdminComplianceOverride = (bool) $user->complianceOverride)
+                            <div class="col-md-6 col-12">
+                                <div class="form-group">
+                                    <label>@lang('Compliance Onboarding')</label>
+                                    <input type="checkbox" data-width="100%" data-onstyle="-success" data-offstyle="-danger" data-bs-toggle="toggle" data-on="@lang('Completed')" data-off="@lang('Incomplete')" name="compliance_completed" @checked($hasSubmittedCompliance || $hasAdminComplianceOverride) @disabled($hasSubmittedCompliance)>
+                                    @if ($hasSubmittedCompliance)
+                                        <small class="text-muted">@lang('Completed by the user submission')</small>
+                                    @else
+                                        <small class="text-muted">@lang('Manual administrator completion')</small>
+                                    @endif
+                                </div>
+                            </div>
                             <div class="col-md-12">
                                 <button type="submit" class="btn btn--primary w-100 h-45">@lang('Submit')
                                 </button>

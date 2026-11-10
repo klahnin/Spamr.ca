@@ -7,14 +7,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 class KycController extends Controller {
     public function show(){
-        $profile = ComplianceProfile::where('user_id', auth()->id())->firstOrFail();
-        $type = $profile->account_type === 'individual' ? 'individual' : 'business';
+        $profile = ComplianceProfile::where('user_id', auth()->id())->first();
+        $type = $profile?->account_type === 'individual' ? 'individual' : 'business';
         $kyc = KycVerification::firstOrCreate(['user_id'=>auth()->id()], ['status'=>'required','verification_type'=>$type]);
         return view('templates.basic.user.kyc', compact('kyc','profile','type'));
     }
     public function submit(Request $request){
-        $profile = ComplianceProfile::where('user_id', auth()->id())->firstOrFail();
-        $type = $profile->account_type === 'individual' ? 'individual' : 'business';
+        $profile = ComplianceProfile::where('user_id', auth()->id())->first();
+        $type = $profile?->account_type === 'individual' ? 'individual' : 'business';
         $kyc = KycVerification::firstOrCreate(['user_id'=>auth()->id()], ['status'=>'required','verification_type'=>$type]);
         abort_unless(in_array($kyc->status, ['required','rejected'], true), 403);
         $rules = ['consent'=>['accepted']];

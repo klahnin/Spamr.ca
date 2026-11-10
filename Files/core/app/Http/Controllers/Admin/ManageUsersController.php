@@ -11,6 +11,7 @@ use App\Models\NotificationTemplate;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\KycVerification;
+use App\Models\ComplianceOverride;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -143,6 +144,18 @@ class ManageUsersController extends Controller
         $user->sv = $request->sv ? Status::VERIFIED : Status::UNVERIFIED;
 
         $user->save();
+
+        // A submitted profile remains authoritative; this toggle only manages an explicit admin override.
+        if (!$user->complianceProfile) {
+            if ($request->boolean('compliance_completed')) {
+                ComplianceOverride::updateOrCreate(
+                    ['user_id' => $user->id],
+                    ['completed_by' => auth('admin')->id(), 'completed_at' => now()]
+                );
+            } else {
+                ComplianceOverride::where('user_id', $user->id)->delete();
+            }
+        }
 
         $notify[] = ['success', 'User details updated successfully'];
         return back()->withNotify($notify);
