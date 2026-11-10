@@ -9,7 +9,8 @@
   @foreach($domains as $domain)<hr><div class="small"><strong>{{ $domain->hostname }}</strong><br>
    @if($domain->verified_at)<span class="text-success">✓ Verified {{ $domain->verified_at->diffForHumans() }}</span>
    @else <span class="text-warning">Pending DNS TXT verification</span><br><code>_spamr-verify.{{ $domain->hostname }}</code><br><code>{{ $domain->verification_token }}</code>
-   <form method="POST" action="{{ route('user.funnels.domains.verify',$domain->id) }}">@csrf<button class="btn btn-sm btn-outline--base mt-2">Verify DNS record</button></form>@endif
+   <form method="POST" action="{{ route('user.funnels.domains.verify',$domain->id) }}" class="d-inline">@csrf<button class="btn btn-sm btn-outline--base mt-2">Verify DNS record</button></form>
+   <form method="POST" action="{{ route('user.funnels.domains.destroy',$domain->id) }}" class="d-inline" onsubmit="return confirm('Cancel this pending domain verification?')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline--danger mt-2">Cancel</button></form>@endif
   </div>@if($domain->verified_at && !$domain->cname_verified_at)<div class="small mt-2 text-warning">Add CNAME <code>{{ $domain->hostname }}</code> → <code>{{ config('funnels.tracking_cname_target') }}</code>, then verify again.</div>@elseif($domain->cname_verified_at)<div class="small mt-2 text-success">✓ Branded tracking host ready</div>@endif
   @endforeach
  </div></div></div>

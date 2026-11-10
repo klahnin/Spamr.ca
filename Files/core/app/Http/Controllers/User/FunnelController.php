@@ -63,6 +63,19 @@ class FunnelController extends Controller
         return back()->withNotify([['success', $message]]);
     }
 
+    /** A pending verification has no live funnels and can be safely cancelled. */
+    public function destroyDomain($id)
+    {
+        $domain = FunnelDomain::where('user_id', auth()->id())->findOrFail($id);
+
+        if ($domain->verified_at || $domain->funnels()->exists()) {
+            return back()->withNotify([['error', 'Verified domains or domains with funnels cannot be cancelled here. Remove their funnels first.']]);
+        }
+
+        $domain->delete();
+        return back()->withNotify([['success', 'Pending domain verification cancelled.']]);
+    }
+
     public function storeFunnel(Request $request)
     {
         $request->validate([

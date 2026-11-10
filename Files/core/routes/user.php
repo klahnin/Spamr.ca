@@ -149,6 +149,7 @@ Route::middleware('auth')->name('user.')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::post('domains', 'storeDomain')->name('domains.store');
                 Route::post('domains/{id}/verify', 'verifyDomain')->name('domains.verify');
+                Route::delete('domains/{id}', 'destroyDomain')->name('domains.destroy');
                 Route::post('/', 'storeFunnel')->name('store');
                 Route::get('leads', 'leads')->name('leads');
             });
