@@ -10,7 +10,8 @@ class KycController extends Controller {
         $profile = ComplianceProfile::where('user_id', auth()->id())->first();
         $type = $profile?->account_type === 'individual' ? 'individual' : 'business';
         $kyc = KycVerification::firstOrCreate(['user_id'=>auth()->id()], ['status'=>'required','verification_type'=>$type]);
-        return view('templates.basic.user.kyc', compact('kyc','profile','type'));
+        $pageTitle = $type === 'individual' ? 'Identity verification' : 'Business verification';
+        return view('Template::user.kyc', compact('pageTitle','kyc','profile','type'));
     }
     public function submit(Request $request){
         $profile = ComplianceProfile::where('user_id', auth()->id())->first();

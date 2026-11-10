@@ -1,4 +1,4 @@
-@extends('templates.basic.layouts.master')
+@extends('Template::layouts.master')
 @section('content')
 <div class="card"><div class="card-body p-4"><h4>{{ $type === 'individual' ? 'Identity verification' : 'Business verification' }}</h4><p class="text-muted">Complete this final verification step before messaging is activated.</p>
 @if($kyc->status === 'submitted')<div class="alert alert-info">Your verification is under review.</div>@elseif($kyc->status === 'verified')<div class="alert alert-success">Your verification has been approved.</div>@else
