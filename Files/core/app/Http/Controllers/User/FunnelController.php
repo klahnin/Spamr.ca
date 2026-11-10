@@ -19,17 +19,48 @@ class FunnelController extends Controller
         $pageTitle = 'Spamr Funnels';
         $domains = FunnelDomain::where('user_id', auth()->id())->latest()->get();
         $funnels = Funnel::where('user_id', auth()->id())->with(['domain', 'links'])->latest()->get();
+        $linkIds = $funnels->flatMap(fn (Funnel $funnel) => $funnel->links->pluck('id'));
+
         $funnels->each(function (Funnel $funnel) {
-            $linkIds = $funnel->links->pluck('id');
+            $funnelLinkIds = $funnel->links->pluck('id');
             $funnel->metrics = [
-                'clicks' => FunnelClickEvent::whereIn('funnel_link_id', $linkIds)->count(),
-                'unique_clicks' => FunnelClickEvent::whereIn('funnel_link_id', $linkIds)->distinct('recipient_hash')->count('recipient_hash'),
+                'clicks' => FunnelClickEvent::whereIn('funnel_link_id', $funnelLinkIds)->count(),
+                'unique_clicks' => FunnelClickEvent::whereIn('funnel_link_id', $funnelLinkIds)->distinct('recipient_hash')->count('recipient_hash'),
                 'views' => FunnelPageEvent::where('funnel_id', $funnel->id)->where('event_type', 'page_view')->count(),
                 'leads' => FunnelLeadSubmission::where('funnel_id', $funnel->id)->count(),
             ];
         });
 
-        return view('Template::user.funnels.index', compact('pageTitle', 'domains', 'funnels'));
+        $totalClicks = FunnelClickEvent::whereIn('funnel_link_id', $linkIds)->count();
+        $totalLeads = FunnelLeadSubmission::where('user_id', auth()->id())->count();
+        $chartStart = now()->subDays(13)->startOfDay();
+        $clicksByDay = FunnelClickEvent::query()
+            ->selectRaw('DATE(funnel_click_events.clicked_at) as tracked_on, COUNT(*) as total')
+            ->whereIn('funnel_link_id', $linkIds)
+            ->where('clicked_at', '>=', $chartStart)
+            ->groupBy('tracked_on')
+            ->pluck('total', 'tracked_on');
+        $clickSeries = collect(range(0, 13))->map(function (int $offset) use ($chartStart, $clicksByDay) {
+            $date = $chartStart->copy()->addDays($offset);
+            return ['label' => $date->format('M j'), 'count' => (int) ($clicksByDay[$date->toDateString()] ?? 0)];
+        });
+        $recentEngagement = FunnelClickEvent::query()
+            ->select('funnel_click_events.*', 'funnels.name as funnel_name', 'funnels.goal_type')
+            ->join('funnel_links', 'funnel_links.id', '=', 'funnel_click_events.funnel_link_id')
+            ->join('funnels', 'funnels.id', '=', 'funnel_links.funnel_id')
+            ->where('funnels.user_id', auth()->id())
+            ->latest('funnel_click_events.clicked_at')
+            ->limit(6)
+            ->get();
+        $analytics = [
+            'clicks' => $totalClicks,
+            'conversion_rate' => $totalClicks ? round(($totalLeads / $totalClicks) * 100, 1) : 0,
+            'leads' => $totalLeads,
+            'verified_domains' => $domains->whereNotNull('verified_at')->count(),
+            'active_links' => $funnels->flatMap(fn (Funnel $funnel) => $funnel->links)->where('is_active')->count(),
+        ];
+
+        return view('Template::user.funnels.index', compact('pageTitle', 'domains', 'funnels', 'analytics', 'clickSeries', 'recentEngagement'));
     }
 
     public function storeDomain(Request $request)
