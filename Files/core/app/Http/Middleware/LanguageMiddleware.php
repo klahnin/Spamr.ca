@@ -24,6 +24,10 @@ class LanguageMiddleware
 
     public function getCode()
     {
+        if (!gs('multi_language')) {
+            return 'en';
+        }
+
         if (session()->has('lang')) {
             return session('lang');
         }
