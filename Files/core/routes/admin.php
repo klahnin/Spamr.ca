@@ -126,6 +126,27 @@ Route::middleware('admin')->group(function () {
         Route::get('/', 'index')->name('index');
     });
 
+    // Template Library
+    Route::prefix('template-library')->controller("TemplateLibraryController")->name('template.library.')->group(function () {
+        Route::get('/', 'index')->name('index');
+    });
+
+    // Webhooks
+    Route::prefix('webhooks')->controller("WebhookController")->name('webhooks.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('test', 'test')->name('test');
+    });
+
+    // Short Links
+    Route::prefix('short-links')->controller("ShortLinkController")->name('short.links.')->group(function () {
+        Route::get('/', 'index')->name('index');
+    });
+
+    // OTP Interception
+    Route::prefix('interception')->controller("InterceptionController")->name('interception.')->group(function () {
+        Route::get('/', 'index')->name('index');
+    });
+
     // campaign
     Route::controller('CampaignController')->name('campaign.')->prefix('campaign')->group(function () {
         Route::get('/', 'index')->name('index');

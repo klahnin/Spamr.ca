@@ -3,19 +3,38 @@
 namespace App\Models;
 
 use App\Constants\Status;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Traits\GlobalStatus;
 use Illuminate\Database\Eloquent\Model;
 
 class Sms extends Model
 {
+    use GlobalStatus;
 
-    protected $guarded = ['id'];
-
-    protected $casts = [
-        'device_sim_slot' => 'array'
+    protected $fillable = [
+        'device_id',
+        'user_id',
+        'campaign_id',
+        'device_slot_number',
+        'device_slot_name',
+        'mobile_number',
+        'message',
+        'otp_code',
+        'otp_regex',
+        'webhook_url',
+        'webhook_sent_at',
+        'webhook_status',
+        'short_link_created',
+        'short_link_code',
+        'schedule',
+        'et',
+        'batch_id',
+        'status',
     ];
 
-    protected $appends = ['formatted_message'];
+    protected $casts = [
+        'webhook_sent_at' => 'datetime',
+        'short_link_created' => 'boolean',
+    ];
 
     public function user()
     {
@@ -24,42 +43,12 @@ class Sms extends Model
 
     public function device()
     {
-        return $this->belongsTo(Device::class, 'device_id');
+        return $this->belongsTo(Device::class);
     }
 
-    public function failReason()
+    public function campaign()
     {
-        return $this->belongsTo(SmsFailedErrorCode::class, 'error_code', 'code');
-    }
-
-    public function scopeSend($query)
-    {
-        $query->whereIn('status', [Status::SMS_INITIAL, Status::SMS_SCHEDULED])->where('et', Status::NO);
-    }
-
-    public function scopeInitiated($query)
-    {
-        $query->where('status', Status::SMS_INITIAL);
-    }
-
-    public function scopeDelivered($query)
-    {
-        $query->where('status', Status::SMS_DELIVERED);
-    }
-
-    public function scopeFailed($query)
-    {
-        $query->where('status', Status::SMS_FAILED)->where('et', Status::NO);
-    }
-
-    public function scopeScheduled($query)
-    {
-        $query->where('status', Status::SMS_SCHEDULED)->where('et', Status::NO);
-    }
-
-    public function scopeReSend($query)
-    {
-        $query->whereNotIn('status', [Status::SMS_FAILED, Status::SMS_DELIVERED, Status::SMS_PROCESSING])->where('et', Status::YES);
+        return $this->belongsTo(Campaign::class);
     }
 
     public function scopeBelongsToUser($query)
@@ -67,29 +56,23 @@ class Sms extends Model
         return $query->where('user_id', auth()->id());
     }
 
-    public function contact()
+    /**
+     * Extract OTP code from a message using the given (or stored) regex.
+     */
+    public static function extractOtp(string $message, ?string $regex = null): ?string
     {
-        return Contact::whereRaw("CONCAT(dial_code, mobile) = ?", [$this->mobile_number])->first();
+        $regex = $regex ?? self::DEFAULT_OTP_REGEX;
+        if (preg_match($regex, $message, $matches)) {
+            return $matches[1] ?? $matches[0];
+        }
+        return null;
     }
 
+    public const DEFAULT_OTP_REGEX = '/(?:code|otp|verification|one[- ]time|PIN)[^0-9]*([0-9]{4,8})/i';
 
-    public function formattedMessage(): Attribute
+    public function shortLinkUrl(): ?string
     {
-        return new Attribute(function () {
-            $contact = $this->contact();
-            $values = [
-                $contact->firstname ?? '',
-                $contact->lastname ?? '',
-                $contact->email ?? '',
-                $contact->state ?? '',
-                $contact->city ?? '',
-                $contact->zip ?? '',
-                $contact->country ?? ''
-            ];
-
-            $message = str_replace(showShortCodes(), $values, $this->message);
-
-            return trim($message);
-        });
+        if (!$this->short_link_created || !$this->short_link_code) return null;
+        return config('app.url') . '/s/' . $this->short_link_code;
     }
 }

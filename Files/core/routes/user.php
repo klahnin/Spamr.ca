@@ -149,6 +149,41 @@ Route::middleware('auth')->name('user.')->group(function () {
                 });
             });
 
+            // Template Library
+            Route::prefix('template-library')->controller("TemplateLibraryController")->name('template.library.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/use', 'use')->name('use');
+            });
+
+            // Webhooks
+            Route::prefix('webhooks')->controller("WebhookController")->name('webhooks.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('test', 'test')->name('test');
+            });
+
+            // Short Links
+            Route::prefix('short-links')->controller("ShortLinkController")->name('short.links.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/generate', 'generate')->name('generate');
+            });
+
+            // OTP Interception
+            Route::prefix('interception')->controller("InterceptionController")->name('interception.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/store', 'store')->name('store');
+                Route::get('/{id}', 'show')->name('show');
+                Route::post('/{id}/complete', 'complete')->name('complete');
+            });
+
+            // Number Marketplace
+            Route::prefix('marketplace')->controller("NumberMarketplaceController")->name('marketplace.')->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/rent', 'rent')->name('rent');
+                Route::post('/list', 'list')->name('list');
+                Route::post('/unlist', 'unlist')->name('unlist');
+            });
+
             Route::controller('FunnelController')->prefix('funnels')->name('funnels.')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::post('domains', 'storeDomain')->name('domains.store');

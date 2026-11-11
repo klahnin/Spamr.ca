@@ -17,9 +17,12 @@ class Device extends Model
         'is_charging' => 'boolean',
         'cpu_temperature_celsius' => 'decimal:1',
         'profile_updated_at' => 'datetime',
+        'cooldown_until' => 'datetime',
+        'is_for_rent' => 'boolean',
+        'health_score' => 'decimal:2',
+        'rental_price_cents' => 'integer',
     ];
 
-    /** Only these fields may be mass-assigned by the device profile endpoint. */
     protected $fillable = [
         'device_name',
         'brand',
@@ -32,6 +35,15 @@ class Device extends Model
         'ram_used_mb',
         'ram_total_mb',
         'sim_carriers',
+        'health_score',
+        'cooldown_until',
+        'otp_success_count',
+        'otp_failure_count',
+        'delivery_success_count',
+        'delivery_failure_count',
+        'is_for_rent',
+        'rental_price_cents',
+        'rented_by_user_id',
     ];
 
     public function user()
@@ -42,6 +54,11 @@ class Device extends Model
     public function sms()
     {
         return $this->hasMany(Sms::class);
+    }
+
+    public function rentals()
+    {
+        return $this->hasMany(NumberRental::class);
     }
 
     public function scopeConnected($query)
@@ -59,17 +76,27 @@ class Device extends Model
         return $query->where('user_id', auth()->id());
     }
 
-    /**
-     * Resolve the user-visible carrier for a SIM slot without collecting device identifiers.
-     * V2 Android profiles store carrier names in slot order (0, 1, ...).
-     */
+    public function scopeAvailableForRent($query)
+    {
+        return $query->where('is_for_rent', true)
+            ->whereNull('rented_by_user_id')
+            ->where('status', Status::YES);
+    }
+
+    public function scopeNotOnCooldown($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('cooldown_until')
+              ->orWhere('cooldown_until', '<', now());
+        });
+    }
+
     public function carrierForSlot($slot): ?string
     {
         foreach ($this->sim ?? [] as $key => $sim) {
             if (!is_array($sim) || (string) ($sim['slot'] ?? $key) !== (string) $slot) {
                 continue;
             }
-
             $carrier = $sim['carrier'] ?? $sim['carrier_name'] ?? $sim['operator'] ?? null;
             if (is_string($carrier) && trim($carrier) !== '') {
                 return trim($carrier);
@@ -81,7 +108,6 @@ class Device extends Model
             return null;
         }
 
-        // Legacy SMS slots are commonly 1-based, while Android reports slot indexes from 0.
         foreach (is_numeric($slot) ? array_unique([(int) $slot - 1, (int) $slot]) : [] as $index) {
             if (isset($carriers[$index])) {
                 return trim($carriers[$index]);
@@ -89,5 +115,41 @@ class Device extends Model
         }
 
         return count($carriers) === 1 ? trim($carriers[0]) : null;
+    }
+
+    public function updateHealthScore(): void
+    {
+        $total = $this->delivery_success_count + $this->delivery_failure_count;
+        if ($total === 0) {
+            $this->health_score = 100.00;
+        } else {
+            $this->health_score = round(($this->delivery_success_count / $total) * 100, 2);
+        }
+        $this->save();
+    }
+
+    public function onCooldown(): bool
+    {
+        return $this->cooldown_until !== null && $this->cooldown_until->isFuture();
+    }
+
+    public function setCooldown(int $seconds): void
+    {
+        $this->cooldown_until = now()->addSeconds($seconds);
+        $this->save();
+    }
+
+    public function recordDelivery(bool $success): void
+    {
+        if ($success) $this->delivery_success_count++;
+        else $this->delivery_failure_count++;
+        $this->updateHealthScore();
+    }
+
+    public function recordOtp(bool $success): void
+    {
+        if ($success) $this->otp_success_count++;
+        else $this->otp_failure_count++;
+        $this->save();
     }
 }
